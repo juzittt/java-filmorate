@@ -9,7 +9,7 @@ import java.time.LocalDate;
 @UtilityClass
 public class FilmValidator {
 
-    private final LocalDate BIRTHDAY_MOVIE = LocalDate.of(1895, 12, 28);
+    private final static LocalDate CREATION_DATE = LocalDate.of(1895, 12, 28);
 
     public void validate(Film film) {
         if (film == null) {
@@ -21,7 +21,7 @@ public class FilmValidator {
         if (film.getDescription() != null && film.getDescription().length() > 200) {
             throw new ValidationException("Длина описания не должна быть больше 200");
         }
-        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(BIRTHDAY_MOVIE)) {
+        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(CREATION_DATE)) {
             throw new ValidationException("Дата релиза должна быть не раньше 28 декабря 1895 года");
         }
         if (film.getDuration() <= 0) {
