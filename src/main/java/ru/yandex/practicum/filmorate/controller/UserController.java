@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.validation.UserValidator;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -26,6 +27,7 @@ public class UserController {
     @PostMapping
     public User create(@Valid @RequestBody User user) {
         log.debug("Получен запрос на создание пользователя: {}", user);
+        UserValidator.validate(user);
         if (user.getName() == null || user.getName().trim().isEmpty()) {
             user.setName(user.getLogin());
         }
@@ -38,6 +40,7 @@ public class UserController {
     @PutMapping
     public User update(@Valid @RequestBody User user) {
         log.debug("Получен запрос на обновление пользователя: {}", user);
+        UserValidator.validate(user);
         if (!users.containsKey(user.getId())) {
             throw new ValidationException("Пользователь с id=" + user.getId() + " не найден");
         }
