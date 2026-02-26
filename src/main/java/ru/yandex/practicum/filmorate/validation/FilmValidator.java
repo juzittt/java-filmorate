@@ -9,7 +9,7 @@ import java.time.LocalDate;
 @UtilityClass
 public class FilmValidator {
 
-    private final static LocalDate CREATION_DATE = LocalDate.of(1895, 12, 28);
+    private static final LocalDate CREATION_DATE = LocalDate.of(1895, 12, 28);
 
     public void validate(Film film) {
         if (film == null) {
