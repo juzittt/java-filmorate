@@ -1,51 +1,51 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.validation.FilmValidator;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
-import java.util.*;
+import java.util.List;
 
-@Slf4j
 @RestController
 @RequestMapping("/films")
+@RequiredArgsConstructor
 public class FilmController {
 
-    private final Map<Long, Film> films = new HashMap<>();
+    private final FilmService filmService;
 
     @GetMapping
-    public Collection<Film> findAll() {
-        log.info("Получен список всех фильмов");
-        return films.values();
+    public List<Film> getFilms() {
+        return filmService.getFilms();
     }
 
     @PostMapping
-    public Film create(@Valid @RequestBody Film film) {
-        log.debug("Получен запрос на создание фильма: {}", film);
-        FilmValidator.validate(film);
-        film.setId(getNextId());
-        films.put(film.getId(), film);
-        log.info("Фильм добавлен с id={}", film.getId());
-        return film;
+    @ResponseStatus(HttpStatus.CREATED)
+    public Film addFilm(@Valid @RequestBody Film film) {
+        return filmService.addFilm(film);
     }
 
     @PutMapping
-    public Film update(@Valid @RequestBody Film film) {
-        log.debug("Получен запрос на обновление фильма: {}", film);
-        FilmValidator.validate(film);
-        if (!films.containsKey(film.getId())) {
-            throw new ValidationException("Фильм с id=" + film.getId() + " не найден");
-        }
-        films.put(film.getId(), film);
-        log.info("Фильм с id={} обновлён", film.getId());
-        return film;
+    public Film updateFilm(@Valid @RequestBody Film newFilm) {
+        return filmService.updateFilm(newFilm);
     }
 
-    private long getNextId() {
-        long currentMaxId = films.keySet().stream().mapToLong(Long::longValue).max().orElse(0);
-        return ++currentMaxId;
+    @PutMapping("/{id}/like/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void addLike(@PathVariable Long id, @PathVariable Long userId) {
+        filmService.addLike(id, userId);
+    }
+
+    @DeleteMapping("/{id}/like/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteLike(@PathVariable Long id, @PathVariable Long userId) {
+        filmService.deleteLike(id, userId);
+    }
+
+    @GetMapping("/popular")
+    public List<Film> getMostPopularFilms(@RequestParam(required = false) Integer count) {
+        return filmService.getMostPopularFilms(count);
     }
 }
