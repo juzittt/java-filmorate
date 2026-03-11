@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
@@ -17,40 +18,44 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    public List<User> getUsers() {
-        return userService.getUsers();
+    public ResponseEntity<List<User>> getUsers() {
+        return ResponseEntity.ok(userService.getUsers());
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public User addUser(@Valid @RequestBody User user) {
-        return userService.addUser(user);
+    public ResponseEntity<User> addUser(@Valid @RequestBody User user) {
+        User added = userService.addUser(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(added);
     }
 
     @PutMapping
-    public User updateUser(@Valid @RequestBody User newUser) {
-        return userService.updateUser(newUser);
+    public ResponseEntity<User> updateUser(@Valid @RequestBody User newUser) {
+        User updated = userService.updateUser(newUser);
+        return ResponseEntity.ok(updated);
     }
 
+    //? Вот методы void надо также переделывать под ResponseEntity или можно было оставить как есть?
     @PutMapping("/{id}/friends/{friendId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void addFriend(@PathVariable Long id, @PathVariable Long friendId) {
-        userService.addFriend(friendId, id);
+    public ResponseEntity<Void> addFriend(@PathVariable Long id, @PathVariable Long friendId) {
+        userService.addFriend(id, friendId);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteFriend(@PathVariable Long id, @PathVariable Long friendId) {
+    public ResponseEntity<Void> deleteFriend(@PathVariable Long id, @PathVariable Long friendId) {
         userService.removeFriend(id, friendId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}/friends")
-    public List<User> getFriends(@PathVariable Long id) {
-        return userService.getFriends(id);
+    public ResponseEntity<List<User>> getFriends(@PathVariable Long id) {
+        List<User> friends = userService.getFriends(id);
+        return ResponseEntity.ok(friends);
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
-    public List<User> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
-        return userService.getMutualFriends(id, otherId);
+    public ResponseEntity<List<User>> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
+        List<User> common = userService.getMutualFriends(id, otherId);
+        return ResponseEntity.ok(common);
     }
 }
