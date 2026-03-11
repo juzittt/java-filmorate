@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/films")
@@ -59,5 +60,11 @@ public class FilmController {
     public ResponseEntity<List<Film>> getMostPopularFilms(@RequestParam(required = false) Integer count) {
         List<Film> films = filmService.getMostPopularFilms(count);
         return ResponseEntity.ok(films);
+    }
+
+    @GetMapping("/{id}/likes")
+    public ResponseEntity<Set<Long>> getLikes(@PathVariable Long id) {
+        Set<Long> likes = filmService.getLikes(id);
+        return ResponseEntity.ok(likes);
     }
 }

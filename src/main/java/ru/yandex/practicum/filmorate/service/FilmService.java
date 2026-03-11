@@ -16,7 +16,7 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class FilmService {
-    public final UserService userService;
+    private final UserService userService;
     private final FilmStorage filmStorage;
 
     public List<Film> getFilms() {
@@ -62,6 +62,7 @@ public class FilmService {
     }
 
     public Set<Long> getLikes(Long filmId) {
+        checkFilmPresence(filmId);
         return filmStorage.getLikes(filmId);
     }
 
