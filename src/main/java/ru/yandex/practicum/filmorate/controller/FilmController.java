@@ -1,51 +1,70 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.validation.FilmValidator;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 
-@Slf4j
 @RestController
 @RequestMapping("/films")
+@RequiredArgsConstructor
 public class FilmController {
 
-    private final Map<Long, Film> films = new HashMap<>();
+    private final FilmService filmService;
 
     @GetMapping
-    public Collection<Film> findAll() {
-        log.info("Получен список всех фильмов");
-        return films.values();
+    public ResponseEntity<List<Film>> getFilms() {
+        return ResponseEntity.ok(filmService.getFilms());
     }
 
     @PostMapping
-    public Film create(@Valid @RequestBody Film film) {
-        log.debug("Получен запрос на создание фильма: {}", film);
-        FilmValidator.validate(film);
-        film.setId(getNextId());
-        films.put(film.getId(), film);
-        log.info("Фильм добавлен с id={}", film.getId());
-        return film;
+    public ResponseEntity<Film> addFilm(@Valid @RequestBody Film film) {
+        Film added = filmService.addFilm(film);
+        return ResponseEntity.status(HttpStatus.CREATED).body(added);
     }
 
     @PutMapping
-    public Film update(@Valid @RequestBody Film film) {
-        log.debug("Получен запрос на обновление фильма: {}", film);
-        FilmValidator.validate(film);
-        if (!films.containsKey(film.getId())) {
-            throw new ValidationException("Фильм с id=" + film.getId() + " не найден");
-        }
-        films.put(film.getId(), film);
-        log.info("Фильм с id={} обновлён", film.getId());
-        return film;
+    public ResponseEntity<Film> updateFilm(@Valid @RequestBody Film newFilm) {
+        Film updated = filmService.updateFilm(newFilm);
+        return ResponseEntity.ok(updated);
     }
 
-    private long getNextId() {
-        long currentMaxId = films.keySet().stream().mapToLong(Long::longValue).max().orElse(0);
-        return ++currentMaxId;
+    //! Не уверен, что тут правильно написал метод
+
+    @PutMapping("/{id}/like/{userId}")
+    public ResponseEntity<Void> addLike(@PathVariable Long id, @PathVariable Long userId) {
+        filmService.addLike(id, userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}/like/{userId}")
+    public ResponseEntity<Void> deleteLike(@PathVariable Long id, @PathVariable Long userId) {
+        filmService.deleteLike(id, userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /*?Или все же оставить как было?
+    ?@DeleteMapping("/{id}/like/{userId}")
+    ?@ResponseStatus(HttpStatus.NO_CONTENT)
+    ?public void deleteLike(@PathVariable Long id, @PathVariable Long userId) {
+    ?    filmService.deleteLike(id, userId);
+    ?}*/
+
+    @GetMapping("/popular")
+    public ResponseEntity<List<Film>> getMostPopularFilms(@RequestParam(required = false) Integer count) {
+        List<Film> films = filmService.getMostPopularFilms(count);
+        return ResponseEntity.ok(films);
+    }
+
+    @GetMapping("/{id}/likes")
+    public ResponseEntity<Set<Long>> getLikes(@PathVariable Long id) {
+        Set<Long> likes = filmService.getLikes(id);
+        return ResponseEntity.ok(likes);
     }
 }

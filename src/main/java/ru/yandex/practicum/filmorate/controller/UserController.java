@@ -1,59 +1,61 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.validation.UserValidator;
+import ru.yandex.practicum.filmorate.service.UserService;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
-@Slf4j
 @RestController
 @RequestMapping("/users")
+@RequiredArgsConstructor
 public class UserController {
 
-    private final Map<Long, User> users = new HashMap<>();
+    private final UserService userService;
 
     @GetMapping
-    public Collection<User> findAll() {
-        log.info("Получен список всех пользователей");
-        return users.values();
+    public ResponseEntity<List<User>> getUsers() {
+        return ResponseEntity.ok(userService.getUsers());
     }
 
     @PostMapping
-    public User create(@Valid @RequestBody User user) {
-        log.debug("Получен запрос на создание пользователя: {}", user);
-        UserValidator.validate(user);
-        if (user.getName() == null || user.getName().trim().isEmpty()) {
-            user.setName(user.getLogin());
-        }
-        user.setId(getNextId());
-        users.put(user.getId(), user);
-        log.info("Пользователь добавлен с id={}", user.getId());
-        return user;
+    public ResponseEntity<User> addUser(@Valid @RequestBody User user) {
+        User added = userService.addUser(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(added);
     }
 
     @PutMapping
-    public User update(@Valid @RequestBody User user) {
-        log.debug("Получен запрос на обновление пользователя: {}", user);
-        UserValidator.validate(user);
-        if (!users.containsKey(user.getId())) {
-            throw new ValidationException("Пользователь с id=" + user.getId() + " не найден");
-        }
-        if (user.getName() == null || user.getName().trim().isEmpty()) {
-            user.setName(user.getLogin());
-        }
-        users.put(user.getId(), user);
-        log.info("Пользователь с id={} обновлён", user.getId());
-        return user;
+    public ResponseEntity<User> updateUser(@Valid @RequestBody User newUser) {
+        User updated = userService.updateUser(newUser);
+        return ResponseEntity.ok(updated);
     }
 
-    private long getNextId() {
-        long currentMaxId = users.keySet().stream().mapToLong(Long::longValue).max().orElse(0);
-        return ++currentMaxId;
+    //? Вот методы void надо также переделывать под ResponseEntity или можно было оставить как есть?
+    @PutMapping("/{id}/friends/{friendId}")
+    public ResponseEntity<Void> addFriend(@PathVariable Long id, @PathVariable Long friendId) {
+        userService.addFriend(id, friendId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public ResponseEntity<Void> deleteFriend(@PathVariable Long id, @PathVariable Long friendId) {
+        userService.removeFriend(id, friendId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/friends")
+    public ResponseEntity<List<User>> getFriends(@PathVariable Long id) {
+        List<User> friends = userService.getFriends(id);
+        return ResponseEntity.ok(friends);
+    }
+
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public ResponseEntity<List<User>> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
+        List<User> common = userService.getMutualFriends(id, otherId);
+        return ResponseEntity.ok(common);
     }
 }
