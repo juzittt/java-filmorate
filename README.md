@@ -1,4 +1,5 @@
 # java-filmorate
+<img width="1584" height="622" alt="db-sheme" src="https://github.com/user-attachments/assets/be4757a7-271c-4d48-9de5-dc6c70f93351" />
 
 Получить все фильмы с жанрами.
 ```sql
