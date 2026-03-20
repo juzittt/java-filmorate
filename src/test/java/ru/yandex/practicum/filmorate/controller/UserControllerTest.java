@@ -40,7 +40,7 @@ class UserControllerTest {
     @BeforeEach
     void setUp() {
         validUser = User.builder()
-                .id(1L)
+                .userId(1L)
                 .email("test@example.com")
                 .login("test-login")
                 .name("Test Name")

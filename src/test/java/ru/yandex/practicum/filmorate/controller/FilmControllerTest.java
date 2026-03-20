@@ -47,7 +47,7 @@ class FilmControllerTest {
     @BeforeEach
     void setUp() {
         validFilm = Film.builder()
-                .id(1L)
+                .filmId(1L)
                 .name("Valid Film")
                 .description("Good film")
                 .releaseDate(LocalDate.of(2000, 1, 1))
@@ -146,9 +146,9 @@ class FilmControllerTest {
     void getMostPopularFilms_withCount_shouldReturnN() throws Exception {
         // Given
         List<Film> films = List.of(
-                Film.builder().id(1L).name("Top 1").build(),
-                Film.builder().id(2L).name("Top 2").build(),
-                Film.builder().id(3L).name("Top 3").build()
+                Film.builder().filmId(1L).name("Top 1").build(),
+                Film.builder().filmId(2L).name("Top 2").build(),
+                Film.builder().filmId(3L).name("Top 3").build()
         );
         when(filmService.getMostPopularFilms(3)).thenReturn(films);
 
