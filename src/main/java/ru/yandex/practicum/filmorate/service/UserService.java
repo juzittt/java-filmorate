@@ -26,20 +26,20 @@ public class UserService {
         validate(user);
 
         Long id = (long) (getUsers().size() + 1);
-        user.setId(id);
+        user.setUserId(id);
         userStorage.saveUser(user);
-        log.info("User {} added with id: {}", user.getName(), user.getId());
+        log.info("User {} added with id: {}", user.getName(), user.getUserId());
         return user;
     }
 
     public User updateUser(User newUser) {
         validate(newUser);
 
-        return userStorage.getUserById(newUser.getId())
+        return userStorage.getUserById(newUser.getUserId())
                 .map(user -> processUpdateUser(newUser))
                 .orElseThrow(() -> {
-                    log.error("User {} with id {} not found", newUser.getName(), newUser.getId());
-                    return new NotFoundException("Пользователь " + newUser.getName() + " с id " + newUser.getId() + " не найден");
+                    log.error("User {} with id {} not found", newUser.getName(), newUser.getUserId());
+                    return new NotFoundException("Пользователь " + newUser.getName() + " с id " + newUser.getUserId() + " не найден");
                 });
     }
 
@@ -112,7 +112,7 @@ public class UserService {
 
     private User processUpdateUser(User newUser) {
         userStorage.saveUser(newUser);
-        log.info("Updated user with id: {}", newUser.getId());
+        log.info("Updated user with id: {}", newUser.getUserId());
         return newUser;
     }
 }

@@ -9,7 +9,7 @@ import java.time.LocalDate;
 @Data
 @Builder(toBuilder = true)
 public class User {
-    private Long id;
+    private Long userId;
 
     @NotBlank(message = "Email не должен быть пустым")
     @Email(message = "Email должен быть корректным")

@@ -13,8 +13,8 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public void saveFilm(Film film) {
-        likeUsers.putIfAbsent(film.getId(), new HashSet<>());
-        films.put(film.getId(), film);
+        likeUsers.putIfAbsent(film.getFilmId(), new HashSet<>());
+        films.put(film.getFilmId(), film);
     }
 
     @Override
@@ -31,7 +31,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     public List<Film> getMostPopularFilms(int count) {
         return films.values()
                 .stream()
-                .sorted(Comparator.comparingInt((Film f) -> likeUsers.get(f.getId()).size()).reversed())
+                .sorted(Comparator.comparingInt((Film f) -> likeUsers.get(f.getFilmId()).size()).reversed())
                 .limit(count)
                 .toList();
     }

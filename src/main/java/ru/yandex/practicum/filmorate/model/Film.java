@@ -9,7 +9,7 @@ import java.time.LocalDate;
 @Data
 @Builder(toBuilder = true)
 public class Film {
-    private Long id;
+    private Long filmId;
 
     @NotBlank(message = "Название не должно быть пустым")
     private String name;

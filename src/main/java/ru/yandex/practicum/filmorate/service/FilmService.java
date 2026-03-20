@@ -27,7 +27,7 @@ public class FilmService {
         validateFilm(film);
 
         Long id = (long) (getFilms().size() + 1);
-        film.setId(id);
+        film.setFilmId(id);
         filmStorage.saveFilm(film);
         log.info("Film with name: {} was added.", film.getName());
         return film;
@@ -36,11 +36,11 @@ public class FilmService {
     public Film updateFilm(Film newFilm) {
         validateFilm(newFilm);
 
-        return filmStorage.getFilmById(newFilm.getId())
+        return filmStorage.getFilmById(newFilm.getFilmId())
                 .map(film -> processUpdateFilm(newFilm))
                 .orElseThrow(() -> {
-                    log.error("Error updating film: {}, with id: {}", newFilm.getName(), newFilm.getId());
-                    return new NotFoundException("Фильм с id = " + newFilm.getId() + " не найден.");
+                    log.error("Error updating film: {}, with id: {}", newFilm.getName(), newFilm.getFilmId());
+                    return new NotFoundException("Фильм с id = " + newFilm.getFilmId() + " не найден.");
                 });
     }
 
@@ -80,13 +80,13 @@ public class FilmService {
 
     private Film processUpdateFilm(Film newFilm) {
         filmStorage.saveFilm(newFilm);
-        log.info("Updated film with id: {}", newFilm.getId());
+        log.info("Updated film with id: {}", newFilm.getFilmId());
         return newFilm;
     }
 
     private void validateFilm(Film film) {
         if (isWrongDate(film)) {
-            log.error("Film with id = {}. Wrong release date: {}", film.getId(), film.getReleaseDate());
+            log.error("Film with id = {}. Wrong release date: {}", film.getFilmId(), film.getReleaseDate());
             throw new ValidationException("Самая ранняя разрешенная дата фильма: 1895-12-28");
         }
     }
