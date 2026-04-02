@@ -1,14 +1,22 @@
 package ru.yandex.practicum.filmorate.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
 public class Film {
+    @JsonProperty("id")
     private Long filmId;
 
     @NotBlank(message = "Название не должно быть пустым")
@@ -24,4 +32,11 @@ public class Film {
     @NotNull(message = "Длительность не должна быть пустой")
     @Positive(message = "Продолжительность должна быть положительной")
     private int duration;
+
+    @JsonProperty("mpa")
+    private MpaRating mpa;
+
+    @Builder.Default
+    @JsonProperty("genres")
+    private List<Genre> genres = new ArrayList<>();
 }

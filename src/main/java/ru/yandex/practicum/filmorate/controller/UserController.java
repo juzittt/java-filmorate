@@ -14,7 +14,6 @@ import java.util.List;
 @RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController {
-
     private final UserService userService;
 
     @GetMapping
@@ -23,18 +22,32 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<User> addUser(@Valid @RequestBody User user) {
-        User added = userService.addUser(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(added);
+    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
+        User created = userService.addUser(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping
-    public ResponseEntity<User> updateUser(@Valid @RequestBody User newUser) {
-        User updated = userService.updateUser(newUser);
-        return ResponseEntity.ok(updated);
+    public ResponseEntity<User> updateUser(@RequestBody User updateUser) {
+        User existingUser = userService.getUserById(updateUser.getUserId());
+
+        if (updateUser.getEmail() != null && !updateUser.getEmail().isBlank()) {
+            existingUser.setEmail(updateUser.getEmail());
+        }
+        if (updateUser.getLogin() != null && !updateUser.getLogin().isBlank()) {
+            existingUser.setLogin(updateUser.getLogin());
+        }
+        if (updateUser.getName() != null) {
+            existingUser.setName(updateUser.getName());
+        }
+        if (updateUser.getBirthday() != null) {
+            existingUser.setBirthday(updateUser.getBirthday());
+        }
+
+        User updatedUser = userService.updateUser(existingUser);
+        return ResponseEntity.ok(updatedUser);
     }
 
-    //? Вот методы void надо также переделывать под ResponseEntity или можно было оставить как есть?
     @PutMapping("/{id}/friends/{friendId}")
     public ResponseEntity<Void> addFriend(@PathVariable Long id, @PathVariable Long friendId) {
         userService.addFriend(id, friendId);
@@ -42,7 +55,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
-    public ResponseEntity<Void> deleteFriend(@PathVariable Long id, @PathVariable Long friendId) {
+    public ResponseEntity<Void> removeFriend(@PathVariable Long id, @PathVariable Long friendId) {
         userService.removeFriend(id, friendId);
         return ResponseEntity.noContent().build();
     }
@@ -55,7 +68,13 @@ public class UserController {
 
     @GetMapping("/{id}/friends/common/{otherId}")
     public ResponseEntity<List<User>> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
-        List<User> common = userService.getMutualFriends(id, otherId);
+        List<User> common = userService.getCommonFriends(id, otherId);
         return ResponseEntity.ok(common);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 }

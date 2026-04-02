@@ -1,118 +1,82 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+import ru.yandex.practicum.filmorate.storage.UserDbStorage;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Optional;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
-
-    private final UserStorage userStorage;
+    private final UserDbStorage userStorage;
 
     public List<User> getUsers() {
         return userStorage.getUsers();
     }
 
     public User addUser(User user) {
-        validate(user);
-
-        Long id = (long) (getUsers().size() + 1);
-        user.setUserId(id);
+        UserMapper.validate(user);
         userStorage.saveUser(user);
-        log.info("User {} added with id: {}", user.getName(), user.getUserId());
         return user;
     }
 
     public User updateUser(User newUser) {
-        validate(newUser);
+        UserMapper.validate(newUser);
+        getUserById(newUser.getUserId());
 
-        return userStorage.getUserById(newUser.getUserId())
-                .map(user -> processUpdateUser(newUser))
-                .orElseThrow(() -> {
-                    log.error("User {} with id {} not found", newUser.getName(), newUser.getUserId());
-                    return new NotFoundException("Пользователь " + newUser.getName() + " с id " + newUser.getUserId() + " не найден");
-                });
-    }
+        validateUniqueFields(newUser);
 
-    public void addFriend(Long id, Long friendId) {
-        checkUserPresence(id, friendId);
-        checkUserConflict(id, friendId);
-
-        log.info("User with id: {} added friend with id: {}", id, friendId);
-        userStorage.addFriend(id, friendId);
-    }
-
-    public void removeFriend(Long id, Long friendId) {
-        checkUserPresence(id, friendId);
-        checkUserConflict(id, friendId);
-
-        log.info("User with id: {} removed friend with id: {}", id, friendId);
-        userStorage.removeFriend(id, friendId);
-    }
-
-    public List<User> getFriends(Long id) {
-        User user = findUser(id);
-        return userStorage.getFriends(user);
-    }
-
-    public List<User> getMutualFriends(Long id, Long otherId) {
-        User user = findUser(id);
-        User otherUser = findUser(otherId);
-
-        List<User> userFriends = userStorage.getFriends(user);
-        Set<User> otherUserFriends = new HashSet<>(userStorage.getFriends(otherUser));
-
-        return userFriends.stream()
-                .filter(otherUserFriends::contains)
-                .toList();
-    }
-
-    private User findUser(Long userId) {
-        return userStorage.getUserById(userId).orElseThrow(() -> {
-            log.error("User with id = {} not found.", userId);
-            return new NotFoundException("Пользователь с id = " + userId + " не найден.");
-        });
-    }
-
-    void checkUserPresence(Long... userIds) {
-        Set<Long> userIdSet = new HashSet<>(Arrays.asList(userIds));
-        List<Long> foundIds = userStorage.findExistentIds(userIdSet);
-
-        if (userIdSet.size() != foundIds.size()) {
-            String missingIds = userIdSet.stream()
-                    .filter(ids -> !foundIds.contains(ids))
-                    .collect(Collectors.toSet()).toString();
-            log.error("Users not found with ids: {}", missingIds);
-            throw new NotFoundException("Не найдены пользователи с id: " + missingIds);
-        }
-    }
-
-    private void checkUserConflict(Long id, Long friendId) {
-        if (Objects.equals(id, friendId)) {
-            log.error("User with id = {} conflicted with friendId = {}.", id, friendId);
-            throw new ValidationException(
-                    "Попытка добавить или удалить друга с тем же id, что и у пользователя.");
-        }
-    }
-
-    private void validate(User user) {
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
-    }
-
-    private User processUpdateUser(User newUser) {
         userStorage.saveUser(newUser);
-        log.info("Updated user with id: {}", newUser.getUserId());
         return newUser;
+    }
+
+    public void addFriend(Long userId, Long friendId) {
+        getUserById(userId);
+        getUserById(friendId);
+        userStorage.addFriend(userId, friendId);
+    }
+
+    public void removeFriend(Long userId, Long friendId) {
+        getUserById(userId);
+        getUserById(friendId);
+        userStorage.removeFriend(userId, friendId);
+    }
+
+    public List<User> getFriends(Long userId) {
+        getUserById(userId);
+        return userStorage.getFriends(userId);
+    }
+
+    public List<User> getCommonFriends(Long id, Long otherId) {
+        return userStorage.getCommonFriends(id, otherId);
+    }
+
+    public void deleteUser(Long userId) {
+        if (!userStorage.removeUser(userId)) {
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден.");
+        }
+    }
+
+    private void validateUniqueFields(User user) {
+        Optional<User> byEmail = userStorage.findByEmail(user.getEmail());
+        if (byEmail.isPresent() && !byEmail.get().getUserId().equals(user.getUserId())) {
+            throw new ValidationException("Email уже используется другим пользователем.");
+        }
+
+        Optional<User> byLogin = userStorage.findByLogin(user.getLogin());
+        if (byLogin.isPresent() && !byLogin.get().getUserId().equals(user.getUserId())) {
+            throw new ValidationException("Логин уже занят.");
+        }
+    }
+
+    public User getUserById(Long userId) {
+        return userStorage.getUserById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id = " + userId + " не найден."));
     }
 }
