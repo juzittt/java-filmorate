@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 @Repository
 public class FilmRepository extends BaseRepository<Film> {
     private static final String FIND_ALL_QUERY = """
-            SELECT 
+            SELECT
                 f.film_id,
                 f.title,
                 f.description,
@@ -27,7 +27,7 @@ public class FilmRepository extends BaseRepository<Film> {
             LEFT JOIN mpa_rating r ON f.rating_id = r.rating_id
             """;
     private static final String FIND_BY_ID_QUERY = """
-            SELECT 
+            SELECT
                 f.film_id,
                 f.title,
                 f.description,
@@ -48,7 +48,7 @@ public class FilmRepository extends BaseRepository<Film> {
             WHERE film_id = ?
             """;
     private static final String FIND_MOST_POPULAR_QUERY = """
-            SELECT 
+            SELECT
                 f.film_id,
                 f.title,
                 f.description,
