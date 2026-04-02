@@ -11,8 +11,8 @@ import java.sql.SQLException;
 public class UserRowMapper implements RowMapper {
     @Override
     public User mapRow(ResultSet rs, int rowNum) throws SQLException {
-        return User.builder().
-                userId(rs.getLong("user_id"))
+        return User.builder()
+                .userId(rs.getLong("user_id"))
                 .email(rs.getString("email"))
                 .login(rs.getString("login"))
                 .name(rs.getString("user_name"))
