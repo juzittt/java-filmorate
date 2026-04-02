@@ -69,7 +69,7 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
-    public boolean deleteFilm(Long filmId){
+    public boolean deleteFilm(Long filmId) {
         return filmRepository.deleteFilm(filmId);
     }
 }
