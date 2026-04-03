@@ -12,7 +12,7 @@ import java.util.Optional;
 public class GenreRepository extends BaseRepository<Genre> {
     private static final String FIND_ALL_QUERY = "SELECT * FROM genres";
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM genres WHERE genre_id = ?";
-    private static final String ADD_GENRE = "INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)";
+    private static final String ADD_GENRE = "MERGE INTO film_genres (film_id, genre_id) VALUES (?, ?)";
     private static final String FIND_GENRES_BY_FILM_ID = """
             SELECT g.genre_id, g.name
             FROM genres g
@@ -20,6 +20,8 @@ public class GenreRepository extends BaseRepository<Genre> {
             WHERE fg.film_id = ?
             ORDER BY g.genre_id
             """;
+    private static final String DELETE_GENRES_BY_FILM_ID = "DELETE FROM film_genres WHERE film_id = ?";
+
 
     public GenreRepository(JdbcTemplate jdbc, GenreRowMapper mapper) {
         super(jdbc, mapper);
@@ -34,6 +36,8 @@ public class GenreRepository extends BaseRepository<Genre> {
     }
 
     public void addGenresToFilm(Long filmId, List<Genre> genres) {
+        jdbc.update(DELETE_GENRES_BY_FILM_ID, filmId);
+
         if (genres == null || genres.isEmpty()) {
             return;
         }

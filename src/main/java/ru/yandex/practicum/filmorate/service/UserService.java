@@ -2,6 +2,9 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dto.NewUserRequest;
+import ru.yandex.practicum.filmorate.dto.UpdateUserRequest;
+import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.UserMapper;
@@ -9,74 +12,97 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserDbStorage;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
+
     private final UserDbStorage userStorage;
+    private final UserMapper userMapper;
 
-    public List<User> getUsers() {
-        return userStorage.getUsers();
-    }
-
-    public User addUser(User user) {
-        UserMapper.validate(user);
+    public UserDto createUser(NewUserRequest request) {
+        validateUniqueFields(request.getEmail(), request.getLogin(), null);
+        User user = userMapper.toEntity(request);
         userStorage.saveUser(user);
-        return user;
+        return userMapper.toDto(user);
     }
 
-    public User updateUser(User newUser) {
-        UserMapper.validate(newUser);
-        getUserById(newUser.getUserId());
+    public UserDto updateUser(UpdateUserRequest request) {
+        Long id = request.getId();
+        User existing = getUserEntityById(id);
 
-        validateUniqueFields(newUser);
+        validateUniqueFields(request.getEmail(), request.getLogin(), id);
 
-        userStorage.saveUser(newUser);
-        return newUser;
+        userMapper.updateEntityFromRequest(existing, request);
+        userStorage.saveUser(existing);
+        return userMapper.toDto(existing);
+    }
+
+    public List<UserDto> getUsers() {
+        return userStorage.getUsers().stream()
+                .map(userMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    public UserDto getUserById(Long id) {
+        User user = getUserEntityById(id);
+        return userMapper.toDto(user);
     }
 
     public void addFriend(Long userId, Long friendId) {
-        getUserById(userId);
-        getUserById(friendId);
-        userStorage.addFriend(userId, friendId);
+        getUserEntityById(userId);
+        User friend = getUserEntityById(friendId);
+        userStorage.addFriend(userId, friend.getUserId());
     }
 
     public void removeFriend(Long userId, Long friendId) {
-        getUserById(userId);
-        getUserById(friendId);
+        getUserEntityById(userId);
+        getUserEntityById(friendId);
         userStorage.removeFriend(userId, friendId);
     }
 
-    public List<User> getFriends(Long userId) {
-        getUserById(userId);
-        return userStorage.getFriends(userId);
+    public List<UserDto> getFriends(Long userId) {
+        getUserEntityById(userId);
+        return userStorage.getFriends(userId).stream()
+                .map(userMapper::toDto)
+                .collect(Collectors.toList());
     }
 
-    public List<User> getCommonFriends(Long id, Long otherId) {
-        return userStorage.getCommonFriends(id, otherId);
+    public List<UserDto> getCommonFriends(Long id, Long otherId) {
+        return userStorage.getCommonFriends(id, otherId).stream()
+                .map(userMapper::toDto)
+                .collect(Collectors.toList());
     }
 
-    public void deleteUser(Long userId) {
-        if (!userStorage.removeUser(userId)) {
-            throw new NotFoundException("Пользователь с id = " + userId + " не найден.");
+    public void deleteUser(Long id) {
+        if (!userStorage.removeUser(id)) {
+            throw new NotFoundException("Пользователь с id = " + id + " не найден.");
         }
     }
 
-    private void validateUniqueFields(User user) {
-        Optional<User> byEmail = userStorage.findByEmail(user.getEmail());
-        if (byEmail.isPresent() && !byEmail.get().getUserId().equals(user.getUserId())) {
-            throw new ValidationException("Email уже используется другим пользователем.");
-        }
 
-        Optional<User> byLogin = userStorage.findByLogin(user.getLogin());
-        if (byLogin.isPresent() && !byLogin.get().getUserId().equals(user.getUserId())) {
-            throw new ValidationException("Логин уже занят.");
-        }
+    private User getUserEntityById(Long id) {
+        return userStorage.getUserById(id)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id = " + id + " не найден."));
     }
 
-    public User getUserById(Long userId) {
-        return userStorage.getUserById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id = " + userId + " не найден."));
+    private void validateUniqueFields(String email, String login, Long currentId) {
+        if (email != null && !email.isBlank()) {
+            userStorage.findByEmail(email)
+                    .ifPresent(user -> {
+                        if (!user.getUserId().equals(currentId)) {
+                            throw new ValidationException("Email уже используется.");
+                        }
+                    });
+        }
+        if (login != null && !login.isBlank()) {
+            userStorage.findByLogin(login)
+                    .ifPresent(user -> {
+                        if (!user.getUserId().equals(currentId)) {
+                            throw new ValidationException("Логин уже занят.");
+                        }
+                    });
+        }
     }
 }
