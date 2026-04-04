@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.dao.FilmRepository;
 import ru.yandex.practicum.filmorate.dao.GenreRepository;
 import ru.yandex.practicum.filmorate.dao.MpaRatingRepository;
+import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -88,7 +89,6 @@ public class FilmService {
     }
 
     private void doValidate(LocalDate releaseDate, MpaDto mpaDto, List<GenreDto> genreDtos) {
-        // Проверка даты релиза
         if (releaseDate != null && releaseDate.isBefore(LocalDate.of(1895, 12, 28))) {
             throw new ValidationException("Дата релиза должна быть не раньше 28 декабря 1895 года.");
         }
@@ -120,13 +120,13 @@ public class FilmService {
         return filmMapper.toDto(film);
     }
 
-    private void linkGenres(Long filmId, List<ru.yandex.practicum.filmorate.dto.GenreDto> genres) {
+    private void linkGenres(Long filmId, List<GenreDto> genres) {
         if (genres == null || genres.isEmpty()) {
             genreRepository.deleteGenresByFilmId(filmId);
             return;
         }
 
-        List<ru.yandex.practicum.filmorate.model.Genre> genreEntities = genres.stream()
+        List<Genre> genreEntities = genres.stream()
                 .map(filmMapper::toEntity)
                 .collect(Collectors.toList());
 

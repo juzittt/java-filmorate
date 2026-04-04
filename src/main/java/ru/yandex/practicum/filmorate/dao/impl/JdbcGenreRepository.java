@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.dao.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.mapper.GenreRowMapper;
@@ -37,7 +38,7 @@ public class JdbcGenreRepository implements GenreRepository {
     public Optional<Genre> findById(Long id) {
         try {
             return Optional.ofNullable(jdbc.queryForObject(FIND_BY_ID, new GenreRowMapper(), id));
-        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+        } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
     }

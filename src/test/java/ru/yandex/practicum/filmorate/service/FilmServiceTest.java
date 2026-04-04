@@ -17,12 +17,9 @@ import ru.yandex.practicum.filmorate.model.MpaRating;
 import ru.yandex.practicum.filmorate.testdata.TestData;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
