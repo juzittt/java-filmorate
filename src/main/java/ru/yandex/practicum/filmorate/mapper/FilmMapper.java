@@ -39,7 +39,7 @@ public class FilmMapper {
                 .build();
     }
 
-    public void updateEntityFromRequest(Film film, UpdateFilmRequest request) {
+    public void updateFilmFromRequest(Film film, UpdateFilmRequest request) {
         if (request.getName() != null) film.setName(request.getName());
         if (request.getDescription() != null) film.setDescription(request.getDescription());
         if (request.getReleaseDate() != null) film.setReleaseDate(request.getReleaseDate());

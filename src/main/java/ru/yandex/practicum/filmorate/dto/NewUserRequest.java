@@ -1,11 +1,13 @@
 package ru.yandex.practicum.filmorate.dto;
 
 import jakarta.validation.constraints.*;
+import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDate;
 
 @Data
+@Builder(toBuilder = true)
 public class NewUserRequest {
     @NotBlank(message = "Email обязателен")
     @Email(message = "Некорректный email")

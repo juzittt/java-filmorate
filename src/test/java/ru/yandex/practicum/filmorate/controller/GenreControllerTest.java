@@ -3,54 +3,67 @@ package ru.yandex.practicum.filmorate.controller;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
-import ru.yandex.practicum.filmorate.model.Genre;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.web.servlet.MockMvc;
+import ru.yandex.practicum.filmorate.dto.GenreDto;
+import ru.yandex.practicum.filmorate.service.GenreService;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureTestDatabase
-@Transactional
-@ActiveProfiles("test")
+@WebMvcTest(GenreController.class)
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-@DisplayName("GenreController тесты")
+@DisplayName("GenreController :: HTTP Contract Tests")
 public class GenreControllerTest {
 
-    private static final Logger log = LoggerFactory.getLogger(GenreControllerTest.class);
+    @Autowired
+    private MockMvc mockMvc;
 
-    private final GenreController genreController;
+    @MockBean
+    private GenreService genreService;
 
     @Test
-    @DisplayName("Должен вернуть список всех жанров — 200 OK и список")
-    void shouldReturnAllGenres() {
-        ResponseEntity<List<Genre>> response = genreController.getAll();
-        List<Genre> genres = response.getBody();
+    @DisplayName("getAll() should return 200 with list of genres")
+    void getAll_ShouldReturn200_WithListOfGenres() throws Exception {
+        List<GenreDto> genres = List.of(
+                GenreDto.builder().id(1L).name("Комедия").build(),
+                GenreDto.builder().id(2L).name("Драма").build()
+        );
+        when(genreService.getAllGenres()).thenReturn(genres);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(genres).hasSize(6);
-        assertThat(genres.get(0).getName()).isEqualTo("Боевик");
-        log.info("Получено жанров: {}", genres.size());
+        mockMvc.perform(get("/genres"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].name").value("Комедия"));
     }
 
     @Test
-    @DisplayName("Должен вернуть жанр по ID — 200 OK и 'Комедия'")
-    void shouldReturnGenreById() {
-        ResponseEntity<Genre> response = genreController.getById(1L);
-        Genre genre = response.getBody();
+    @DisplayName("getById() should return 200 when genre exists")
+    void getById_ShouldReturn200_WhenGenreExists() throws Exception {
+        GenreDto genre = GenreDto.builder().id(1L).name("Комедия").build();
+        when(genreService.getGenreById(1L)).thenReturn(genre);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(genre).isNotNull();
-        assertThat(genre.getGenreId()).isEqualTo(1L);
-        assertThat(genre.getName()).isEqualTo("Комедия");
+        mockMvc.perform(get("/genres/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.name").value("Комедия"));
+    }
+
+    @Test
+    @DisplayName("getById() should return 404 when genre not found")
+    void getById_ShouldReturn404_WhenGenreNotFound() throws Exception {
+        when(genreService.getGenreById(999L))
+                .thenThrow(new ru.yandex.practicum.filmorate.exception.NotFoundException("Жанр не найден"));
+
+        mockMvc.perform(get("/genres/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Жанр не найден"));
     }
 }

@@ -28,7 +28,7 @@ public class UserMapper {
                 .build();
     }
 
-    public void updateEntityFromRequest(User user, UpdateUserRequest request) {
+    public void updateUserFromRequest(User user, UpdateUserRequest request) {
         if (request.getEmail() != null && !request.getEmail().isBlank()) {
             user.setEmail(request.getEmail());
         }

@@ -1,119 +1,123 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
-import jakarta.validation.ValidatorFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.User;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import ru.yandex.practicum.filmorate.dto.NewUserRequest;
+import ru.yandex.practicum.filmorate.dto.UserDto;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.testdata.TestData;
 
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Set;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureTestDatabase
-@Transactional
-@ActiveProfiles("test")
+@WebMvcTest(UserController.class)
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-@DisplayName("UserController тесты")
+@DisplayName("UserController :: HTTP Contract Tests")
 public class UserControllerTest {
 
-    private static final Logger log = LoggerFactory.getLogger(UserControllerTest.class);
+    @Autowired
+    private MockMvc mockMvc;
 
-    private final UserController userController;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-    private Validator validator;
-    private User createdUser;
+    @MockBean
+    private UserService userService;
+
+    private NewUserRequest user;
+    private UserDto userDto;
 
     @BeforeEach
     void setUp() {
-        try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
-            validator = factory.getValidator();
-        }
-
-        User baseUser = User.builder()
-                .email("base@email.com")
-                .login("Базовый")
-                .birthday(LocalDate.of(2000, 1, 1))
-                .build();
-
-        ResponseEntity<User> response = userController.createUser(baseUser);
-        createdUser = response.getBody();
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        log.info("Подготовлен пользователь: {}", createdUser.getLogin());
+        user = TestData.createNewUserRequest();
+        userDto = TestData.createUserDto(1L);
     }
 
     @Test
-    @DisplayName("Должен создать пользователя, если данные валидны — возвращает 201 OK")
-    void shouldCreateUserWhenValid() {
-        User user = User.builder()
-                .email("valid@email.com")
-                .login("validlogin")
-                .name("Valid Name")
-                .birthday(LocalDate.of(1985, 5, 5))
-                .build();
+    @DisplayName("createUser() should return 201 when valid data")
+    void createUser_ShouldReturn201_WhenValidData() throws Exception {
+        UserDto dto = userDto;
 
-        Set<ConstraintViolation<User>> violations = validator.validate(user);
-        ResponseEntity<User> response = userController.createUser(user);
-        User saved = response.getBody();
+        when(userService.createUser(any(NewUserRequest.class))).thenReturn(dto);
 
-        assertThat(violations).isEmpty();
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(saved).isNotNull();
-        assertThat(saved.getUserId()).isNotNull();
-        assertThat(saved.getEmail()).isEqualTo("valid@email.com");
-        assertThat(saved.getLogin()).isEqualTo("validlogin");
-    }
+        mockMvc.perform(post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(user)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.email").value(TestData.VALID_EMAIL))
+                .andExpect(jsonPath("$.login").value(TestData.VALID_LOGIN))
+                .andExpect(jsonPath("$.name").value(TestData.VALID_NAME));
 
-
-    @Test
-    @DisplayName("Должен выбросить исключение при попытке добавить друга самому себе")
-    void shouldNotAllowSelfFriendship() {
-        ValidationException exception = assertThrows(
-                ValidationException.class,
-                () -> userController.addFriend(createdUser.getUserId(), createdUser.getUserId())
-        );
-
-        assertThat(exception.getMessage()).isEqualTo("Нельзя добавить самого себя в друзья.");
+        verify(userService, times(1)).createUser(any(NewUserRequest.class));
     }
 
     @Test
-    @DisplayName("Должен получить список друзей — возвращает 200 OK")
-    void shouldGetFriendsList() {
-        User friend = User.builder()
-                .email("friend@e.com")
-                .login("friend")
-                .birthday(LocalDate.now())
-                .build();
+    @DisplayName("getUserById() should return 200 when user exists")
+    void getUserById_ShouldReturn200_WhenUserExists() throws Exception {
+        UserDto dto = userDto;
 
-        ResponseEntity<User> friendResponse = userController.createUser(friend);
-        User savedFriend = friendResponse.getBody();
+        when(userService.getUserById(1L)).thenReturn(dto);
 
-        userController.addFriend(createdUser.getUserId(), savedFriend.getUserId());
+        mockMvc.perform(get("/users/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.email").value(TestData.VALID_EMAIL))
+                .andExpect(jsonPath("$.name").value(TestData.VALID_NAME));
+    }
 
-        ResponseEntity<List<User>> friendsResponse = userController.getFriends(createdUser.getUserId());
-        List<User> friends = friendsResponse.getBody();
+    @Test
+    @DisplayName("getFriends() should return 200 with empty list when no friends")
+    void getFriends_ShouldReturn200_WithEmptyList() throws Exception {
+        when(userService.getFriends(1L)).thenReturn(List.of());
 
-        assertThat(friendsResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(friends).hasSize(1);
-        assertThat(friends.get(0).getUserId()).isEqualTo(savedFriend.getUserId());
+        mockMvc.perform(get("/users/1/friends"))
+                .andExpect(status().isOk())
+                .andExpect(content().json("[]"));
+    }
+
+    @Test
+    @DisplayName("addFriend() should return 204 when valid")
+    void addFriend_ShouldReturn204_WhenValid() throws Exception {
+        doNothing().when(userService).addFriend(1L, 2L);
+
+        mockMvc.perform(put("/users/1/friends/2"))
+                .andExpect(status().isNoContent());
+
+        verify(userService).addFriend(1L, 2L);
+    }
+
+    @Test
+    @DisplayName("removeFriend() should return 204 when valid")
+    void removeFriend_ShouldReturn204_WhenValid() throws Exception {
+        doNothing().when(userService).removeFriend(1L, 2L);
+
+        mockMvc.perform(delete("/users/1/friends/2"))
+                .andExpect(status().isNoContent());
+
+        verify(userService).removeFriend(1L, 2L);
+    }
+
+    @Test
+    @DisplayName("addFriend() should throw ValidationException when self-friendship")
+    void addFriend_ShouldThrowValidationException_WhenSelfFriendship() throws Exception {
+        doThrow(new ru.yandex.practicum.filmorate.exception.ValidationException("Нельзя добавить самого себя в друзья."))
+                .when(userService).addFriend(1L, 1L);
+
+        mockMvc.perform(put("/users/1/friends/1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Нельзя добавить самого себя в друзья."));
     }
 }
