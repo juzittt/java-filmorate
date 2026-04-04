@@ -6,5 +6,6 @@ import java.util.Optional;
 
 public interface MpaRatingRepository {
     List<MpaRating> findAll();
+
     Optional<MpaRating> findById(Long id);
 }
