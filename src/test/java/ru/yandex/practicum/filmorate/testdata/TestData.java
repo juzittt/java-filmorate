@@ -98,7 +98,7 @@ public class TestData {
                 .build();
     }
 
-    public static UserDto createUserDto(Long userId){
+    public static UserDto createUserDto(Long userId) {
         return UserDto.builder()
                 .id(userId)
                 .email(VALID_EMAIL)
