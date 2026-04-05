@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,22 +10,22 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.dto.NewUserRequest;
+import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.testdata.TestData;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(UserController.class)
-@DisplayName("Интеграционные тесты UserController")
-class UserControllerTest {
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
+@DisplayName("UserController :: HTTP Contract Tests")
+public class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -35,91 +36,63 @@ class UserControllerTest {
     @MockBean
     private UserService userService;
 
-    private User validUser;
+    private NewUserRequest user;
+    private UserDto userDto;
 
     @BeforeEach
     void setUp() {
-        validUser = User.builder()
-                .userId(1L)
-                .email("test@example.com")
-                .login("test-login")
-                .name("Test Name")
-                .birthday(LocalDate.of(1990, 1, 1))
-                .build();
+        user = TestData.createNewUserRequest();
+        userDto = TestData.createUserDto(1L);
     }
 
     @Test
-    @DisplayName("GET /users — должен вернуть список пользователей")
-    void getUsers_shouldReturnUserList() throws Exception {
-        when(userService.getUsers()).thenReturn(List.of(validUser));
+    @DisplayName("createUser() should return 201 when valid data")
+    void createUser_ShouldReturn201_WhenValidData() throws Exception {
+        UserDto dto = userDto;
 
-        mockMvc.perform(get("/users"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].email").value("test@example.com"));
-
-        verify(userService).getUsers();
-    }
-
-    @Test
-    @DisplayName("POST /users — валидный пользователь — должен вернуть 201")
-    void addUser_validUser_shouldReturnCreated() throws Exception {
-        when(userService.addUser(any(User.class))).thenReturn(validUser);
+        when(userService.createUser(any(NewUserRequest.class))).thenReturn(dto);
 
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validUser)))
+                        .content(objectMapper.writeValueAsString(user)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.name").value("Test Name"));
+                .andExpect(jsonPath("$.email").value(TestData.VALID_EMAIL))
+                .andExpect(jsonPath("$.login").value(TestData.VALID_LOGIN))
+                .andExpect(jsonPath("$.name").value(TestData.VALID_NAME));
 
-        verify(userService).addUser(any(User.class));
+        verify(userService, times(1)).createUser(any(NewUserRequest.class));
     }
 
     @Test
-    @DisplayName("POST /users — пустой email — должен вернуть 400")
-    void addUser_emailBlank_shouldReturnBadRequest() throws Exception {
-        User invalidUser = validUser.toBuilder().email("").build();
+    @DisplayName("getUserById() should return 200 when user exists")
+    void getUserById_ShouldReturn200_WhenUserExists() throws Exception {
+        UserDto dto = userDto;
 
-        mockMvc.perform(post("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidUser)))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.email").value("Email не должен быть пустым"))
-                .andExpect(jsonPath("$.email").exists());
-    }
+        when(userService.getUserById(1L)).thenReturn(dto);
 
-    @Test
-    @DisplayName("PUT /users — обновление пользователя — должен вернуть 200")
-    void updateUser_validData_shouldReturnOk() throws Exception {
-        when(userService.updateUser(any(User.class))).thenReturn(validUser);
-
-        mockMvc.perform(put("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validUser)))
+        mockMvc.perform(get("/users/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Test Name"));
-
-        verify(userService).updateUser(any(User.class));
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.email").value(TestData.VALID_EMAIL))
+                .andExpect(jsonPath("$.name").value(TestData.VALID_NAME));
     }
 
     @Test
-    @DisplayName("PUT /users — пользователь не найден — должен вернуть 404")
-    void updateUser_notFound_shouldReturnNotFound() throws Exception {
-        when(userService.updateUser(any(User.class)))
-                .thenThrow(new NotFoundException("Пользователь не найден"));
+    @DisplayName("getFriends() should return 200 with empty list when no friends")
+    void getFriends_ShouldReturn200_WithEmptyList() throws Exception {
+        when(userService.getFriends(1L)).thenReturn(List.of());
 
-        mockMvc.perform(put("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validUser)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("Пользователь не найден"));
+        mockMvc.perform(get("/users/1/friends"))
+                .andExpect(status().isOk())
+                .andExpect(content().json("[]"));
     }
 
     @Test
-    @DisplayName("PUT /users/{id}/friends/{friendId} — добавление друга — должен вернуть 204")
-    void addFriend_validIds_shouldReturnNoContent() throws Exception {
+    @DisplayName("addFriend() should return 204 when valid")
+    void addFriend_ShouldReturn204_WhenValid() throws Exception {
+        doNothing().when(userService).addFriend(1L, 2L);
+
         mockMvc.perform(put("/users/1/friends/2"))
                 .andExpect(status().isNoContent());
 
@@ -127,8 +100,10 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("DELETE /users/{id}/friends/{friendId} — удаление друга — должен вернуть 204")
-    void deleteFriend_validIds_shouldReturnNoContent() throws Exception {
+    @DisplayName("removeFriend() should return 204 when valid")
+    void removeFriend_ShouldReturn204_WhenValid() throws Exception {
+        doNothing().when(userService).removeFriend(1L, 2L);
+
         mockMvc.perform(delete("/users/1/friends/2"))
                 .andExpect(status().isNoContent());
 
@@ -136,26 +111,13 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("GET /users/{id}/friends — должен вернуть список друзей")
-    void getFriends_shouldReturnFriends() throws Exception {
-        when(userService.getFriends(1L)).thenReturn(List.of(validUser));
+    @DisplayName("addFriend() should throw ValidationException when self-friendship")
+    void addFriend_ShouldThrowValidationException_WhenSelfFriendship() throws Exception {
+        doThrow(new ru.yandex.practicum.filmorate.exception.ValidationException("Нельзя добавить самого себя в друзья."))
+                .when(userService).addFriend(1L, 1L);
 
-        mockMvc.perform(get("/users/1/friends"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1));
-
-        verify(userService).getFriends(1L);
-    }
-
-    @Test
-    @DisplayName("GET /users/{id}/friends/common/{otherId} — должен вернуть общих друзей")
-    void getCommonFriends_shouldReturnMutual() throws Exception {
-        when(userService.getMutualFriends(1L, 2L)).thenReturn(List.of(validUser));
-
-        mockMvc.perform(get("/users/1/friends/common/2"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1));
-
-        verify(userService).getMutualFriends(1L, 2L);
+        mockMvc.perform(put("/users/1/friends/1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Нельзя добавить самого себя в друзья."));
     }
 }

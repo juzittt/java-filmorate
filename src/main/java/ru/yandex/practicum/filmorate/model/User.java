@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
 import lombok.Data;
@@ -9,6 +10,7 @@ import java.time.LocalDate;
 @Data
 @Builder(toBuilder = true)
 public class User {
+    @JsonProperty("id")
     private Long userId;
 
     @NotBlank(message = "Email не должен быть пустым")
