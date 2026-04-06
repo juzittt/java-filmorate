@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.dao.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -130,7 +131,7 @@ public class JdbcUserRepository implements UserRepository {
     }
 
     private long insert(String sql, Object... params) {
-        var keyHolder = new org.springframework.jdbc.support.GeneratedKeyHolder();
+        var keyHolder = new GeneratedKeyHolder();
         jdbc.update(conn -> {
             var ps = conn.prepareStatement(sql, new String[]{"user_id"});
             for (int i = 0; i < params.length; i++) {
