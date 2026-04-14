@@ -7,13 +7,12 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.mapper.FilmRowMapper;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.dao.FilmRepository;
 
 import java.sql.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Repository
@@ -23,6 +22,7 @@ public class JdbcFilmRepository implements FilmRepository {
     private final JdbcTemplate jdbc;
     private final FilmRowMapper filmRowMapper;
     private final JdbcGenreRepository genreRepository;
+
 
     private static final String FIND_ALL = """
         SELECT f.film_id, f.title, f.description, f.release_date, f.duration,
@@ -50,9 +50,45 @@ public class JdbcFilmRepository implements FilmRepository {
     private static final String REMOVE_LIKE = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
     private static final String FIND_LIKES_QUERY = "SELECT user_id FROM likes WHERE film_id = ?";
 
+    private static final String INSERT_FILM_DIRECTOR_SQL = """
+        INSERT INTO film_directors (film_id, director_id)
+        VALUES (?, ?)
+        """;
+
+    private static final String DELETE_FILM_DIRECTORS = """
+        DELETE FROM film_directors
+        WHERE film_id = ?
+        """;
+
+    private static final String FIND_DIRECTORS_BY_FILM_ID = """
+        SELECT d.director_id, d.name
+        FROM film_directors fd
+        JOIN directors d ON fd.director_id = d.director_id
+        WHERE fd.film_id = ?
+        ORDER BY d.director_id
+        """;
+
+    private static final String FIND_FILMS_BY_DIRECTOR_ORDER_BY_YEAR = FIND_ALL +
+    """
+    JOIN film_directors fd ON f.film_id = fd.film_id
+    WHERE fd.director_id = ?
+    ORDER BY f.release_date ASC, f.film_id ASC
+    """;
+
+    private static final String FIND_FILMS_BY_DIRECTOR_ORDER_BY_LIKES = FIND_ALL +
+    """
+    JOIN film_directors fd ON f.film_id = fd.film_id
+    LEFT JOIN likes l ON f.film_id = l.film_id
+    WHERE fd.director_id = ?
+    GROUP BY f.film_id, f.title, f.description, f.release_date, f.duration, f.rating_id, mr.name
+    ORDER BY COUNT(l.user_id) DESC, f.film_id ASC
+    """;
+
     @Override
     public List<Film> findAll() {
-        return jdbc.query(FIND_ALL, filmRowMapper);
+        List<Film> films = jdbc.query(FIND_ALL, filmRowMapper);
+        loadFilmsData(films);
+        return films;
     }
 
     @Override
@@ -60,7 +96,7 @@ public class JdbcFilmRepository implements FilmRepository {
         try {
             Film film = jdbc.queryForObject(FIND_BY_ID, filmRowMapper, id);
             if (film != null) {
-                film.setGenres(genreRepository.findGenresByFilmId(id));
+                loadFilmData(film);
             }
             return Optional.ofNullable(film);
         } catch (EmptyResultDataAccessException e) {
@@ -79,7 +115,9 @@ public class JdbcFilmRepository implements FilmRepository {
         );
         film.setFilmId(id);
         genreRepository.addGenresToFilm(id, film.getGenres());
-        return film;
+        saveFilmDirectors(id, film.getDirectors());
+        return findById(id)
+                .orElseThrow(() -> new NotFoundException("Фильм с id = " + id + " не найден."));
     }
 
     @Override
@@ -95,11 +133,14 @@ public class JdbcFilmRepository implements FilmRepository {
             throw new NotFoundException("Фильм с id = " + film.getFilmId() + " не найден.");
         }
         genreRepository.replaceGenres(film.getFilmId(), film.getGenres());
+        updateFilmDirectors(film.getFilmId(), film.getDirectors());
     }
 
     @Override
     public List<Film> findMostPopular(int count) {
-        return jdbc.query(POPULAR, filmRowMapper, count);
+        List<Film> films = jdbc.query(POPULAR, filmRowMapper, count);
+        loadFilmsData(films);
+        return films;
     }
 
     @Override
@@ -143,9 +184,74 @@ public class JdbcFilmRepository implements FilmRepository {
                 .stream().collect(Collectors.toSet());
     }
 
+    @Override
+    public List<Film> findByDirector(Long directorId, String sortBy) {
+        List<Film> films;
+
+        if ("year".equals(sortBy)) {
+            films = jdbc.query(FIND_FILMS_BY_DIRECTOR_ORDER_BY_YEAR, filmRowMapper, directorId);
+        } else if ("likes".equals(sortBy)) {
+            films = jdbc.query(FIND_FILMS_BY_DIRECTOR_ORDER_BY_LIKES, filmRowMapper, directorId);
+        } else {
+            throw new IllegalArgumentException("Параметр sortBy должен быть year или likes");
+        }
+
+        loadFilmsData(films);
+        return films;
+    }
+
+    private void saveFilmDirectors(Long filmId, Set<Director> directors) {
+        if (directors == null || directors.isEmpty()) {
+            return;
+        }
+
+        Set<Long> uniqueDirectorIds = directors.stream()
+                .filter(Objects::nonNull)
+                .map(Director::getDirectorId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        for (Long directorId : uniqueDirectorIds) {
+            jdbc.update(INSERT_FILM_DIRECTOR_SQL, filmId, directorId);
+        }
+    }
+
+    private void updateFilmDirectors(Long filmId, Set<Director> directors) {
+        jdbc.update(DELETE_FILM_DIRECTORS, filmId);
+        saveFilmDirectors(filmId, directors);
+    }
+
+    private Set<Director> getDirectorsByFilmId(Long filmId) {
+        return new LinkedHashSet<>(jdbc.query(
+                FIND_DIRECTORS_BY_FILM_ID,
+                (rs, rowNum) -> Director.builder()
+                        .directorId(rs.getLong("director_id"))
+                        .name(rs.getString("name"))
+                        .build(),
+                filmId
+        ));
+    }
+
     private void checkFilmExists(Long filmId) {
         if (filmId == null || !findById(filmId).isPresent()) {
             throw new NotFoundException("Фильм с id = " + filmId + " не найден.");
+        }
+    }
+
+    private void loadFilmData(Film film) {
+        if (film == null) {
+            return;
+        }
+        film.setGenres(genreRepository.findGenresByFilmId(film.getFilmId()));
+        film.setDirectors(getDirectorsByFilmId(film.getFilmId()));
+    }
+
+    private void loadFilmsData(List<Film> films) {
+        if (films == null || films.isEmpty()) {
+            return;
+        }
+        for (Film film : films) {
+            loadFilmData(film);
         }
     }
 }

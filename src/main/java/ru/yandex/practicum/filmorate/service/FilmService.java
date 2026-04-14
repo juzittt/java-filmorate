@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dao.DirectorRepository;
 import ru.yandex.practicum.filmorate.dto.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -25,6 +26,7 @@ public class FilmService {
     private final MpaRatingRepository mpaRepository;
     private final GenreRepository genreRepository;
     private final FilmMapper filmMapper;
+    private final DirectorRepository directorRepository;
 
     public FilmDto createFilm(NewFilmRequest request) {
         validateNewFilmRequest(request);
@@ -131,5 +133,19 @@ public class FilmService {
                 .collect(Collectors.toList());
 
         genreRepository.replaceGenres(filmId, genreEntities);
+    }
+
+    public List<FilmDto> getFilmsByDirector(Long directorId, String sortBy) {
+        if (!directorRepository.existsById(directorId)) {
+            throw new NotFoundException("Режиссер с id = " + directorId + " не найден.");
+        }
+
+        if (!"year".equals(sortBy) && !"likes".equals(sortBy)) {
+            throw new ValidationException("Параметр sortBy должен быть year или likes.");
+        }
+
+        return filmRepository.findByDirector(directorId, sortBy).stream()
+                .map(this::enrichAndToDto)
+                .collect(Collectors.toList());
     }
 }

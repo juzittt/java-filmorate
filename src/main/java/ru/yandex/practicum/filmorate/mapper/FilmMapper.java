@@ -1,18 +1,21 @@
 package ru.yandex.practicum.filmorate.mapper;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dto.*;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class FilmMapper {
+
+    private final DirectorMapper directorMapper;
 
     public Film toEntity(NewFilmRequest request) {
         return Film.builder()
@@ -22,6 +25,7 @@ public class FilmMapper {
                 .duration(request.getDuration())
                 .mpa(toEntity(request.getMpa()))
                 .genres(mapGenreDtosToEntities(request.getGenres()))
+                .directors(mapDirectorDtosToEntities(request.getDirectors()))
                 .build();
     }
 
@@ -36,6 +40,9 @@ public class FilmMapper {
                 .genres(film.getGenres().stream()
                         .map(this::toDto)
                         .collect(Collectors.toList()))
+                .directors(film.getDirectors().stream()
+                        .map(directorMapper::toDto)
+                        .collect(Collectors.toCollection(LinkedHashSet::new)))
                 .build();
     }
 
@@ -47,6 +54,9 @@ public class FilmMapper {
         if (request.getMpa() != null) film.setMpa(toEntity(request.getMpa()));
         if (request.getGenres() != null) {
             film.setGenres(mapGenreDtosToEntities(request.getGenres()));
+        }
+        if (request.getDirectors() != null) {
+            film.setDirectors(mapDirectorDtosToEntities(request.getDirectors()));
         }
     }
 
@@ -82,6 +92,24 @@ public class FilmMapper {
         return uniqueById.values().stream()
                 .map(this::toEntity)
                 .collect(Collectors.toList());
+    }
+
+    private Set<Director> mapDirectorDtosToEntities(Set<DirectorDto> directorDtos) {
+        if (directorDtos == null || directorDtos.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        Map<Long, DirectorDto> uniqueById = directorDtos.stream()
+                .filter(dto -> dto != null && dto.getDirectorId() != null)
+                .collect(Collectors.toMap(
+                        DirectorDto::getDirectorId,
+                        dto -> dto,
+                        (existing, replacement) -> existing
+                ));
+
+        return uniqueById.values().stream()
+                .map(directorMapper::toEntity)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     public Genre toEntity(GenreDto dto) {

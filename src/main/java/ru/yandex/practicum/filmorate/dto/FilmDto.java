@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Builder
@@ -18,4 +19,7 @@ public class FilmDto {
     private Integer duration;
     private MpaDto mpa;
     private List<GenreDto> genres;
+
+    @JsonProperty("directors")
+    private Set<DirectorDto> directors;
 }
