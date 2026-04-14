@@ -25,4 +25,6 @@ public interface FilmRepository {
     boolean deleteById(Long id);
 
     Set<Long> getLikes(Long filmId);
+
+    List<Film> findByDirector(Long directorId, String sortBy);
 }

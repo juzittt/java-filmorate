@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -9,6 +10,7 @@ import lombok.Data;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Builder(toBuilder = true)
@@ -27,4 +29,7 @@ public class NewFilmRequest {
 
     private MpaDto mpa;
     private List<GenreDto> genres;
+
+    @JsonProperty("directors")
+    private Set<DirectorDto> directors;
 }
