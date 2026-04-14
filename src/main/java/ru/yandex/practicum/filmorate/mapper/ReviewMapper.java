@@ -8,7 +8,7 @@ import ru.yandex.practicum.filmorate.model.Review;
 @Component
 public class ReviewMapper {
 
-    public ReviewDto toDto(Review review){
+    public ReviewDto toDto(Review review) {
         if (review == null) return null;
 
         return ReviewDto.builder()
@@ -21,7 +21,7 @@ public class ReviewMapper {
                 .build();
     }
 
-    public Review toEntity(NewReviewRequest dto){
+    public Review toEntity(NewReviewRequest dto) {
         if (dto == null) return null;
 
         return Review.builder()
