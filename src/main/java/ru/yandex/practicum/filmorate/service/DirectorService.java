@@ -36,13 +36,13 @@ public class DirectorService {
     }
 
     public DirectorDto updateDirector(DirectorDto request) {
-        if (request.getDirector_id() == null) {
+        if (request.getDirectorId() == null) {
             throw new ValidationException("Id режиссера должен быть указан.");
         }
 
         validateDirector(request);
 
-        Director director = getDirectorEntity(request.getDirector_id());
+        Director director = getDirectorEntity(request.getDirectorId());
         directorMapper.updateDirectorFromDto(director, request);
         directorRepository.update(director);
 

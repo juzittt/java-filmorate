@@ -9,7 +9,7 @@ import lombok.Data;
 @Builder
 public class DirectorDto {
     @JsonProperty("id")
-    private Long director_id;
+    private Long directorId;
 
     @NotNull(message = "Имя режиссера не должно быть пустым")
     private String name;

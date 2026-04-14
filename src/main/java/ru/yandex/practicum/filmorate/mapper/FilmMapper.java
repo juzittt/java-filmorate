@@ -100,9 +100,9 @@ public class FilmMapper {
         }
 
         Map<Long, DirectorDto> uniqueById = directorDtos.stream()
-                .filter(dto -> dto != null && dto.getDirector_id() != null)
+                .filter(dto -> dto != null && dto.getDirectorId() != null)
                 .collect(Collectors.toMap(
-                        DirectorDto::getDirector_id,
+                        DirectorDto::getDirectorId,
                         dto -> dto,
                         (existing, replacement) -> existing
                 ));
