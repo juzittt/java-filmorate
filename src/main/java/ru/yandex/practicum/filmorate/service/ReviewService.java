@@ -92,7 +92,7 @@ public class ReviewService {
         }
     }
 
-    private void validateNewReviewRequest(NewReviewRequest request){
+    private void validateNewReviewRequest(NewReviewRequest request) {
         if (request.getUserId() == null) {
             throw new ValidationException("userId не может быть пустым");
         }
