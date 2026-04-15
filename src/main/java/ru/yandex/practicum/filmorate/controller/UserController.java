@@ -10,7 +10,6 @@ import ru.yandex.practicum.filmorate.dto.UpdateUserRequest;
 import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.service.EventService;
 import ru.yandex.practicum.filmorate.service.UserService;
-
 import java.util.List;
 
 @RestController
@@ -20,7 +19,6 @@ public class UserController {
 
     private final UserService userService;
     private final EventService eventService;
-
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

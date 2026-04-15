@@ -7,6 +7,9 @@ import ru.yandex.practicum.filmorate.model.Operation;
 import java.util.List;
 
 public interface EventRepository {
+
     void addEvent(Long userId, EventType eventType, Operation operation, Long entityId);
+
     List<Event> getFeed(Long userId);
+
 }
