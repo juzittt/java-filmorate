@@ -84,6 +84,19 @@ public class JdbcFilmRepository implements FilmRepository {
     ORDER BY COUNT(l.user_id) DESC, f.film_id ASC
     """;
 
+    private static final String GET_COMMON_FILMS = """
+        SELECT f.film_id, f.title, f.description, f.release_date, f.duration,
+           r.rating_id, r.name AS mpa_name
+        FROM films f
+        JOIN mpa_rating r ON f.rating_id = r.rating_id
+        JOIN likes l1 ON f.film_id = l1.film_id
+        JOIN likes l2 ON f.film_id = l2.film_id
+        WHERE l1.user_id = ? AND l2.user_id = ?
+        ORDER BY (
+            SELECT COUNT(*) FROM likes l WHERE l.film_id = f.film_id
+        ) DESC
+        """;
+
     @Override
     public List<Film> findAll() {
         List<Film> films = jdbc.query(FIND_ALL, filmRowMapper);
@@ -198,6 +211,13 @@ public class JdbcFilmRepository implements FilmRepository {
 
         loadFilmsData(films);
         return films;
+    }
+
+    @Override
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+    List<Film> films = jdbc.query(GET_COMMON_FILMS, filmRowMapper, userId, friendId);
+    loadFilmsData(films);
+    return films;
     }
 
     private void saveFilmDirectors(Long filmId, Set<Director> directors) {

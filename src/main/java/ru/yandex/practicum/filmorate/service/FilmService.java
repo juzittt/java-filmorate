@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.DirectorRepository;
+import ru.yandex.practicum.filmorate.dao.impl.JdbcUserRepository;
 import ru.yandex.practicum.filmorate.dto.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -30,6 +31,7 @@ public class FilmService {
     private final FilmMapper filmMapper;
     private final DirectorRepository directorRepository;
     private final EventService eventService;
+    private final JdbcUserRepository userRepository;
 
     public FilmDto createFilm(NewFilmRequest request) {
         validateNewFilmRequest(request);
@@ -74,6 +76,26 @@ public class FilmService {
     public List<FilmDto> getPopularFilms(int count) {
         return filmRepository.findMostPopular(count).stream()
                 .map(this::enrichAndToDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<FilmDto> getCommonFilms(Long userId, Long friendId) {
+        if (userId == null || userId <= 0) {
+            throw new ValidationException("Некорректный id пользователя: " + userId);
+        }
+        if (friendId == null || friendId <= 0) {
+            throw new ValidationException("Некорректный id друга: " + friendId);
+        }
+
+        if (!userRepository.findById(userId).isPresent()) {
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        }
+        if (!userRepository.findById(friendId).isPresent()) {
+            throw new NotFoundException("Друг с id = " + friendId + " не найден");
+        }
+
+        return filmRepository.getCommonFilms(userId, friendId).stream()
+                .map(filmMapper::toDto)
                 .collect(Collectors.toList());
     }
 
