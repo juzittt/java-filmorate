@@ -8,6 +8,8 @@ import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.UserMapper;
+import ru.yandex.practicum.filmorate.model.EventType;
+import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.dao.UserRepository;
 
@@ -20,6 +22,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final EventService eventService;
 
     public UserDto createUser(NewUserRequest request) {
         validateUniqueFields(request.getEmail(), request.getLogin(), null);
@@ -58,6 +61,7 @@ public class UserService {
             throw new ValidationException("Нельзя добавить самого себя в друзья.");
         }
         userRepository.addFriend(userId, friendId);
+        eventService.addEvent(userId, EventType.FRIEND, Operation.ADD, friendId);
     }
 
     public void removeFriend(Long userId, Long friendId) {
@@ -69,6 +73,7 @@ public class UserService {
         getUserEntityById(friendId);
 
         userRepository.removeFriend(userId, friendId);
+        eventService.addEvent(userId, EventType.FRIEND, Operation.REMOVE, friendId);
     }
 
     public List<UserDto> getFriends(Long userId) {

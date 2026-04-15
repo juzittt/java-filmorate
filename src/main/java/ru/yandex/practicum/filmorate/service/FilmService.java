@@ -8,11 +8,13 @@ import ru.yandex.practicum.filmorate.dto.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
+import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.dao.FilmRepository;
 import ru.yandex.practicum.filmorate.dao.GenreRepository;
 import ru.yandex.practicum.filmorate.dao.MpaRatingRepository;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Operation;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -28,6 +30,7 @@ public class FilmService {
     private final GenreRepository genreRepository;
     private final FilmMapper filmMapper;
     private final DirectorRepository directorRepository;
+    private final EventService eventService;
     private final JdbcUserRepository userRepository;
 
     public FilmDto createFilm(NewFilmRequest request) {
@@ -62,10 +65,12 @@ public class FilmService {
             throw new NotFoundException("Фильм с id = " + filmId + " не найден.");
         }
         filmRepository.addLike(filmId, userId);
+        eventService.addEvent(userId, EventType.LIKE, Operation.ADD, filmId);
     }
 
     public void removeLike(Long filmId, Long userId) {
         filmRepository.removeLike(filmId, userId);
+        eventService.addEvent(userId, EventType.LIKE, Operation.REMOVE, filmId);
     }
 
     public List<FilmDto> getPopularFilms(int count) {
