@@ -2,12 +2,14 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dao.FilmRepository;
 import ru.yandex.practicum.filmorate.dto.NewUserRequest;
 import ru.yandex.practicum.filmorate.dto.UpdateUserRequest;
 import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.UserMapper;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.dao.UserRepository;
 
@@ -20,12 +22,18 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final FilmRepository filmRepository;
 
     public UserDto createUser(NewUserRequest request) {
         validateUniqueFields(request.getEmail(), request.getLogin(), null);
         User user = userMapper.toEntity(request);
         userRepository.save(user);
         return userMapper.toDto(user);
+    }
+
+    public List<Film> getRecommendations(Long userId) {
+        getUserEntityById(userId);
+        return filmRepository.getRecommendations(userId);
     }
 
     public UserDto updateUser(UpdateUserRequest request) {
