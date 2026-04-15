@@ -11,6 +11,8 @@ import ru.yandex.practicum.filmorate.dto.UpdateReviewRequest;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.ReviewMapper;
+import ru.yandex.practicum.filmorate.model.EventType;
+import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.Review;
 
 import java.util.List;
@@ -24,12 +26,14 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final FilmRepository filmRepository;
     private final ReviewMapper reviewMapper;
+    private final EventService eventService;
 
     public ReviewDto createReview(NewReviewRequest request) {
         validateNewReviewRequest(request);
 
         Review review = reviewMapper.toEntity(request);
         reviewRepository.save(review);
+        eventService.addEvent(review.getUserId(), EventType.REVIEW, Operation.ADD, review.getReviewId());
         return reviewMapper.toDto(review);
     }
 
@@ -42,10 +46,14 @@ public class ReviewService {
         existing.setPositive(request.getIsPositive());
 
         reviewRepository.update(existing);
+        eventService.addEvent(existing.getUserId(), EventType.REVIEW, Operation.UPDATE, existing.getReviewId());
         return reviewMapper.toDto(existing);
     }
 
     public void deleteReview(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new NotFoundException("Отзыв не найден"));
+        eventService.addEvent(review.getUserId(), EventType.REVIEW, Operation.REMOVE, reviewId);
         reviewRepository.deleteById(reviewId);
     }
 
