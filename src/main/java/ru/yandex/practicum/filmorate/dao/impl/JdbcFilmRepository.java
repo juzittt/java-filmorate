@@ -242,6 +242,13 @@ public class JdbcFilmRepository implements FilmRepository {
         return films;
     }
 
+    @Override
+    public List<Film> getRecommendations(Long userId) {
+        List<Film> films = jdbc.query(FIND_RECOMMENDATIONS, filmRowMapper, userId, userId, userId);
+        loadFilmsData(films);
+        return films;
+    }
+
     private void saveFilmDirectors(Long filmId, Set<Director> directors) {
         if (directors == null || directors.isEmpty()) {
             return;
