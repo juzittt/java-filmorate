@@ -3,15 +3,18 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.DirectorRepository;
+import ru.yandex.practicum.filmorate.dao.impl.JdbcUserRepository;
 import ru.yandex.practicum.filmorate.dto.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
+import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.dao.FilmRepository;
 import ru.yandex.practicum.filmorate.dao.GenreRepository;
 import ru.yandex.practicum.filmorate.dao.MpaRatingRepository;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Operation;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -27,6 +30,8 @@ public class FilmService {
     private final GenreRepository genreRepository;
     private final FilmMapper filmMapper;
     private final DirectorRepository directorRepository;
+    private final EventService eventService;
+    private final JdbcUserRepository userRepository;
 
     public FilmDto createFilm(NewFilmRequest request) {
         validateNewFilmRequest(request);
@@ -60,15 +65,37 @@ public class FilmService {
             throw new NotFoundException("Фильм с id = " + filmId + " не найден.");
         }
         filmRepository.addLike(filmId, userId);
+        eventService.addEvent(userId, EventType.LIKE, Operation.ADD, filmId);
     }
 
     public void removeLike(Long filmId, Long userId) {
         filmRepository.removeLike(filmId, userId);
+        eventService.addEvent(userId, EventType.LIKE, Operation.REMOVE, filmId);
     }
 
     public List<FilmDto> getPopularFilms(int count) {
         return filmRepository.findMostPopular(count).stream()
                 .map(this::enrichAndToDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<FilmDto> getCommonFilms(Long userId, Long friendId) {
+        if (userId == null || userId <= 0) {
+            throw new ValidationException("Некорректный id пользователя: " + userId);
+        }
+        if (friendId == null || friendId <= 0) {
+            throw new ValidationException("Некорректный id друга: " + friendId);
+        }
+
+        if (!userRepository.findById(userId).isPresent()) {
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        }
+        if (!userRepository.findById(friendId).isPresent()) {
+            throw new NotFoundException("Друг с id = " + friendId + " не найден");
+        }
+
+        return filmRepository.getCommonFilms(userId, friendId).stream()
+                .map(filmMapper::toDto)
                 .collect(Collectors.toList());
     }
 
