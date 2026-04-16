@@ -10,6 +10,8 @@ import ru.yandex.practicum.filmorate.dto.UpdateUserRequest;
 import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.service.EventService;
 import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.model.Film;
+
 import java.util.List;
 
 @RestController
@@ -79,4 +81,10 @@ public class UserController {
         return eventService.getFeed(id);
     }
 
+
+    @GetMapping("/{id}/recommendations")
+    @ResponseStatus(HttpStatus.OK)
+    public List<Film> getRecommendations(@PathVariable("id") Long id) {
+        return userService.getRecommendations(id);
+    }
 }

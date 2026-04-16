@@ -75,14 +75,36 @@ public class JdbcFilmRepository implements FilmRepository {
     ORDER BY f.release_date ASC, f.film_id ASC
     """;
 
-    private static final String FIND_FILMS_BY_DIRECTOR_ORDER_BY_LIKES = FIND_ALL +
-    """
-    JOIN film_directors fd ON f.film_id = fd.film_id
-    LEFT JOIN likes l ON f.film_id = l.film_id
-    WHERE fd.director_id = ?
-    GROUP BY f.film_id, f.title, f.description, f.release_date, f.duration, f.rating_id, mr.name
-    ORDER BY COUNT(l.user_id) DESC, f.film_id ASC
-    """;
+    private static final String FIND_FILMS_BY_DIRECTOR_ORDER_BY_LIKES = FIND_ALL + """
+        JOIN film_directors fd ON f.film_id = fd.film_id
+        LEFT JOIN likes l ON f.film_id = l.film_id
+        WHERE fd.director_id = ?
+        GROUP BY f.film_id, f.title, f.description, f.release_date, f.duration, f.rating_id, mr.name
+        ORDER BY COUNT(l.user_id) DESC, f.film_id ASC
+        """;
+
+    private static final String FIND_RECOMMENDATIONS = """
+        SELECT f.film_id, f.title, f.description, f.release_date, f.duration,
+               f.rating_id, mr.name AS mpa_name
+        FROM films f
+        LEFT JOIN mpa_rating mr ON f.rating_id = mr.rating_id
+        WHERE f.film_id IN (
+            SELECT l.film_id
+            FROM likes l
+            WHERE l.user_id = (
+                SELECT l2.user_id
+                FROM likes l1
+                JOIN likes l2 ON l1.film_id = l2.film_id
+                WHERE l1.user_id = ? AND l2.user_id != ?
+                GROUP BY l2.user_id
+                ORDER BY COUNT(*) DESC
+                LIMIT 1
+            )
+            AND l.film_id NOT IN (
+                SELECT film_id FROM likes WHERE user_id = ?
+            )
+        )
+        """;
 
     private static final String GET_COMMON_FILMS = """
         SELECT f.film_id, f.title, f.description, f.release_date, f.duration,
@@ -215,9 +237,16 @@ public class JdbcFilmRepository implements FilmRepository {
 
     @Override
     public List<Film> getCommonFilms(Long userId, Long friendId) {
-    List<Film> films = jdbc.query(GET_COMMON_FILMS, filmRowMapper, userId, friendId);
-    loadFilmsData(films);
-    return films;
+        List<Film> films = jdbc.query(GET_COMMON_FILMS, filmRowMapper, userId, friendId);
+        loadFilmsData(films);
+        return films;
+    }
+
+    @Override
+    public List<Film> getRecommendations(Long userId) {
+        List<Film> films = jdbc.query(FIND_RECOMMENDATIONS, filmRowMapper, userId, userId, userId);
+        loadFilmsData(films);
+        return films;
     }
 
     private void saveFilmDirectors(Long filmId, Set<Director> directors) {
