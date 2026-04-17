@@ -73,12 +73,6 @@ public class FilmService {
         eventService.addEvent(userId, EventType.LIKE, Operation.REMOVE, filmId);
     }
 
-    public List<FilmDto> getPopularFilms(int count) {
-        return filmRepository.findMostPopular(count).stream()
-                .map(this::enrichAndToDto)
-                .collect(Collectors.toList());
-    }
-
     public List<FilmDto> getCommonFilms(Long userId, Long friendId) {
         if (userId == null || userId <= 0) {
             throw new ValidationException("Некорректный id пользователя: " + userId);
@@ -172,6 +166,21 @@ public class FilmService {
         }
 
         return filmRepository.findByDirector(directorId, sortBy).stream()
+                .map(this::enrichAndToDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<FilmDto> getPopularFilms(int count, Long genreId, Integer year) {
+
+        if (year != null && (year < 1895 || year > LocalDate.now().getYear())) {
+            throw new ValidationException("Год должен быть от 1895 до текущего");
+        }
+        if (genreId != null) {
+            genreRepository.findById(genreId)
+                    .orElseThrow(() -> new NotFoundException("Жанр с id = " + genreId + " не найден"));
+        }
+
+        return filmRepository.findMostPopularWithFilters(count, genreId, year).stream()
                 .map(this::enrichAndToDto)
                 .collect(Collectors.toList());
     }

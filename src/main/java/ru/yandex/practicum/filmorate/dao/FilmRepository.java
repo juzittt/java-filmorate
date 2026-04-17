@@ -14,8 +14,6 @@ public interface FilmRepository {
 
     void update(Film film);
 
-    List<Film> findMostPopular(int count);
-
     Set<Long> findLikes(Long filmId);
 
     void addLike(Long filmId, Long userId);
@@ -31,4 +29,6 @@ public interface FilmRepository {
     List<Film> getRecommendations(Long userId);
 
     List<Film> getCommonFilms(Long userId, Long friendId);
+
+    List<Film> findMostPopularWithFilters(int limit, Long genreId, Integer year);
 }

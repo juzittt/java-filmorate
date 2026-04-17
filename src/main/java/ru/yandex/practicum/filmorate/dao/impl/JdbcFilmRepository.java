@@ -35,12 +35,16 @@ public class JdbcFilmRepository implements FilmRepository {
     private static final String INSERT = "INSERT INTO films (title, description, release_date, duration, rating_id) VALUES (?, ?, ?, ?, ?)";
     private static final String UPDATE = "UPDATE films SET title = ?, description = ?, release_date = ?, duration = ?, rating_id = ? WHERE film_id = ?";
     private static final String DELETE = "DELETE FROM films WHERE film_id = ?";
-    private static final String POPULAR = """
+    private static final String POPULAR_WITH_FILTERS = """
         SELECT f.film_id, f.title, f.description, f.release_date, f.duration,
                f.rating_id, mr.name AS mpa_name, COUNT(l.user_id) AS like_count
         FROM films f
         LEFT JOIN likes l ON f.film_id = l.film_id
         LEFT JOIN mpa_rating mr ON f.rating_id = mr.rating_id
+        LEFT JOIN film_genres fg ON f.film_id = fg.film_id
+        WHERE (1=1)
+          AND (? IS NULL OR fg.genre_id = ?)
+          AND (? IS NULL OR EXTRACT(YEAR FROM f.release_date) = ?)
         GROUP BY f.film_id, f.title, f.description, f.release_date, f.duration, f.rating_id, mr.name
         ORDER BY like_count DESC
         LIMIT ?
@@ -172,8 +176,9 @@ public class JdbcFilmRepository implements FilmRepository {
     }
 
     @Override
-    public List<Film> findMostPopular(int count) {
-        List<Film> films = jdbc.query(POPULAR, filmRowMapper, count);
+    public List<Film> findMostPopularWithFilters(int limit, Long genreId, Integer year) {
+        Object[] params = new Object[]{genreId, genreId, year, year, limit};
+        List<Film> films = jdbc.query(POPULAR_WITH_FILTERS, params, filmRowMapper);
         loadFilmsData(films);
         return films;
     }
