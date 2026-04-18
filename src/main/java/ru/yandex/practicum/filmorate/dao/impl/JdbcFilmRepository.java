@@ -123,6 +123,17 @@ public class JdbcFilmRepository implements FilmRepository {
         ) DESC
         """;
 
+    private static final String SEARCH_FILMS = """
+        SELECT f.*, mr.name AS mpa_name,
+               (SELECT COUNT(*) FROM likes WHERE film_id = f.film_id) AS like_count
+        FROM films f
+        LEFT JOIN mpa_rating mr ON f.rating_id = mr.rating_id
+        LEFT JOIN film_directors fd ON f.film_id = fd.film_id
+        LEFT JOIN directors d ON fd.director_id = d.director_id
+        WHERE %s
+        ORDER BY like_count DESC
+        """;
+
     @Override
     public List<Film> findAll() {
         List<Film> films = jdbc.query(FIND_ALL, filmRowMapper);
@@ -157,6 +168,33 @@ public class JdbcFilmRepository implements FilmRepository {
         saveFilmDirectors(id, film.getDirectors());
         return findById(id)
                 .orElseThrow(() -> new NotFoundException("Фильм с id = " + id + " не найден."));
+    }
+
+    @Override
+    public List<Film> search(String query, String by) {
+        String searchPattern = "%" + query.toLowerCase() + "%";
+
+        String condition;
+        Object[] params;
+
+        if (by.contains("director") && by.contains("title")) {
+            condition = "(LOWER(d.name) LIKE ? OR LOWER(f.title) LIKE ?)";
+            params = new Object[]{searchPattern, searchPattern};
+        } else if (by.contains("director")) {
+            condition = "LOWER(d.name) LIKE ?";
+            params = new Object[]{searchPattern};
+        } else {
+            condition = "LOWER(f.title) LIKE ?";
+            params = new Object[]{searchPattern};
+        }
+
+        String finalSql = String.format(SEARCH_FILMS, condition);
+
+        List<Film> films = jdbc.query(finalSql, filmRowMapper, params);
+
+        loadFilmsData(films);
+
+        return films;
     }
 
     @Override

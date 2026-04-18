@@ -87,4 +87,12 @@ public class FilmController {
                                         @RequestParam Long friendId) {
         return filmService.getCommonFilms(userId, friendId);
     }
+    @GetMapping("/search")
+    @ResponseStatus(HttpStatus.OK)
+    public List<FilmDto> search(
+            @RequestParam(name = "query") String query,
+            @RequestParam(name = "by") String by
+    ) {
+        return filmService.searchFilms(query, by);
+    }
 }
