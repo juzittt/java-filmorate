@@ -31,4 +31,6 @@ public interface FilmRepository {
     List<Film> getCommonFilms(Long userId, Long friendId);
 
     List<Film> findMostPopularWithFilters(int limit, Long genreId, Integer year);
+
+    List<Film> search(String query, String by);
 }

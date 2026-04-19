@@ -56,6 +56,13 @@ public class FilmService {
                 .collect(Collectors.toList());
     }
 
+    public List<FilmDto> searchFilms(String query, String by) {
+        List<Film> films = filmRepository.search(query, by);
+        return films.stream()
+                .map(filmMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
     public FilmDto getFilmById(Long id) {
         return enrichAndToDto(getFilmEntity(id));
     }
