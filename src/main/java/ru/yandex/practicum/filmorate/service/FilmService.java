@@ -76,6 +76,13 @@ public class FilmService {
     }
 
     public void removeLike(Long filmId, Long userId) {
+        if (!filmRepository.findById(filmId).isPresent()) {
+            throw new NotFoundException("Фильм с id = " + filmId + " не найден");
+        }
+        if (!userRepository.findById(userId).isPresent()) {
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        }
+
         filmRepository.removeLike(filmId, userId);
         eventService.addEvent(userId, EventType.LIKE, Operation.REMOVE, filmId);
     }

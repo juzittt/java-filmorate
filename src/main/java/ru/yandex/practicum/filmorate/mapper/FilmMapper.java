@@ -52,11 +52,14 @@ public class FilmMapper {
         if (request.getReleaseDate() != null) film.setReleaseDate(request.getReleaseDate());
         if (request.getDuration() != null) film.setDuration(request.getDuration());
         if (request.getMpa() != null) film.setMpa(toEntity(request.getMpa()));
+
         if (request.getGenres() != null) {
             film.setGenres(mapGenreDtosToEntities(request.getGenres()));
         }
         if (request.getDirectors() != null) {
             film.setDirectors(mapDirectorDtosToEntities(request.getDirectors()));
+        } else {
+            film.setDirectors(new LinkedHashSet<>());
         }
     }
 

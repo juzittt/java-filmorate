@@ -50,7 +50,7 @@ public class JdbcFilmRepository implements FilmRepository {
         LIMIT ?
         """;
     private static final String FIND_LIKES = "SELECT user_id FROM likes WHERE film_id = ?";
-    private static final String ADD_LIKE = "INSERT INTO likes (film_id, user_id) VALUES (?, ?)";
+    private static final String ADD_LIKE = "MERGE INTO likes (film_id, user_id) VALUES (?, ?)";
     private static final String REMOVE_LIKE = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
     private static final String FIND_LIKES_QUERY = "SELECT user_id FROM likes WHERE film_id = ?";
 

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dao.EventRepository;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.mapper.EventRowMapper;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.EventType;
@@ -17,6 +18,7 @@ public class JdbcEventRepository implements EventRepository {
 
     private final JdbcTemplate jdbc;
     private final EventRowMapper eventRowMapper;
+    private final JdbcUserRepository userRepository;
 
     private static final String INSERT_EVENT = """
             INSERT INTO events (timestamp, user_id, event_type, operation, entity_id)
@@ -37,6 +39,10 @@ public class JdbcEventRepository implements EventRepository {
 
     @Override
     public List<Event> getFeed(Long userId) {
+        if (!userRepository.findById(userId).isPresent()) {
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        }
+
         return jdbc.query(SELECT_FEED, eventRowMapper, userId);
     }
 }
