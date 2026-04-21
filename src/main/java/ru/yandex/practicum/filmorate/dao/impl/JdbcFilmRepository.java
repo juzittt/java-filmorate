@@ -298,10 +298,8 @@ public class JdbcFilmRepository implements FilmRepository {
         }
 
         Set<Long> uniqueDirectorIds = directors.stream()
-                .filter(Objects::nonNull)
                 .map(Director::getDirectorId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+                .collect(Collectors.toSet());
 
         for (Long directorId : uniqueDirectorIds) {
             jdbc.update(INSERT_FILM_DIRECTOR_SQL, filmId, directorId);
