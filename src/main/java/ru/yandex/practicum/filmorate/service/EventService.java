@@ -21,7 +21,7 @@ public class EventService {
     private final EventMapper eventMapper;
 
     public void addEvent(Long userId, EventType eventType, Operation operation, Long entityId) {
-        log.info("Adding event: user={}, type={}, operation={}, entityId={}",
+        log.debug("Adding event: user={}, type={}, operation={}, entityId={}",
                 userId, eventType, operation, entityId);
 
         validateUserId(userId);

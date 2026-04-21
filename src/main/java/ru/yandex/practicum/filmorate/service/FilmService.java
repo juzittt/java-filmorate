@@ -66,7 +66,7 @@ public class FilmService {
     }
 
     public List<FilmDto> searchFilms(String query, String by) {
-        log.info("Searching films by '{}', query: {}", query, by);
+        log.info("Searching films by '{}', query: {}", by, query);
         List<Film> films = filmRepository.search(query, by);
         log.info("Found {} films matching query '{}'", films.size(), query);
         return films.stream()
@@ -202,7 +202,7 @@ public class FilmService {
                 .collect(Collectors.toList());
 
         genreRepository.replaceGenres(filmId, genreEntities);
-        log.info("Genres updated for film {}: {} genre(s) linked", filmId, genreEntities.size());
+        log.debug("Genres updated for film {}: {} genre(s) linked", filmId, genreEntities.size());
     }
 
     public List<FilmDto> getFilmsByDirector(Long directorId, String sortBy) {
@@ -262,7 +262,7 @@ public class FilmService {
     private void validateFilmId(Long filmId) {
         log.debug("Validating film existence: id={}", filmId);
         if (!filmRepository.findById(filmId).isPresent()) {
-            log.warn("Film not found during {}: filmId={}", filmId);
+            log.warn("Film not found: filmId={}", filmId);
             throw new NotFoundException("Фильм с id = " + filmId + " не найден.");
         }
     }

@@ -72,7 +72,7 @@ public class UserService {
     public UserDto getUserById(Long id) {
         log.info("Fetching user with id={}", id);
         UserDto dto = userMapper.toDto(getUserEntityById(id));
-        log.debug("User found: name='{}', email='{}'", dto.getName(), dto.getEmail());
+        log.info("User found: name='{}', email='{}'", dto.getName(), dto.getEmail());
         return dto;
     }
 
