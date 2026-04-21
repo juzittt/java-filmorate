@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.MpaDto;
@@ -22,7 +21,6 @@ public class MpaRatingController {
     }
 
     @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<MpaDto> getById(@PathVariable("id") Long id) {
         return ResponseEntity.ok(mpaService.getRatingById(id));
     }
