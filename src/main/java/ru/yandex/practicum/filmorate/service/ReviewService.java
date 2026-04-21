@@ -27,6 +27,7 @@ public class ReviewService {
     private final FilmRepository filmRepository;
     private final ReviewMapper reviewMapper;
     private final EventService eventService;
+    private static final int DEFAULT_COUNT = 10;
 
     public ReviewDto createReview(NewReviewRequest request) {
         validateNewReviewRequest(request);
@@ -65,7 +66,7 @@ public class ReviewService {
     }
 
     public List<ReviewDto> getReviews(Long filmId, Integer count) {
-        int limit = (count == null || count <= 0) ? 10 : count;
+        int limit = (count == null || count <= 0) ? DEFAULT_COUNT : count;
         return reviewRepository.findAllByFilmId(filmId, limit).stream()
                 .map(reviewMapper::toDto)
                 .collect(Collectors.toList());

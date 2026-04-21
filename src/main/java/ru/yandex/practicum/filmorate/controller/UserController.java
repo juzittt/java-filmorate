@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.EventDto;
 import ru.yandex.practicum.filmorate.dto.NewUserRequest;
@@ -23,68 +24,62 @@ public class UserController {
     private final EventService eventService;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public UserDto createUser(@Valid @RequestBody NewUserRequest request) {
-        return userService.createUser(request);
+    public ResponseEntity<UserDto> createUser(@Valid @RequestBody NewUserRequest request) {
+        UserDto createdUser = userService.createUser(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
 
     @PutMapping
-    public UserDto updateUser(@Valid @RequestBody UpdateUserRequest request) {
-        return userService.updateUser(request);
+    public ResponseEntity<UserDto> updateUser(@Valid @RequestBody UpdateUserRequest request) {
+        return ResponseEntity.ok(userService.updateUser(request));
     }
 
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
-    public List<UserDto> getUsers() {
-        return userService.getUsers();
+    public ResponseEntity<List<UserDto>> getUsers() {
+        return ResponseEntity.ok(userService.getUsers());
     }
 
     @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public UserDto getUserById(@PathVariable("id") Long id) {
-        return userService.getUserById(id);
+    public ResponseEntity<UserDto> getUserById(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(userService.getUserById(id));
     }
 
     @PutMapping("/{id}/friends/{friendId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void addFriend(@PathVariable("id") Long id, @PathVariable("friendId") Long friendId) {
+    public ResponseEntity<Void> addFriend(@PathVariable("id") Long id, @PathVariable("friendId") Long friendId) {
         userService.addFriend(id, friendId);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeFriend(@PathVariable("id") Long id, @PathVariable("friendId") Long friendId) {
+    public ResponseEntity<Void> removeFriend(@PathVariable("id") Long id, @PathVariable("friendId") Long friendId) {
         userService.removeFriend(id, friendId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}/friends")
-    @ResponseStatus(HttpStatus.OK)
-    public List<UserDto> getFriends(@PathVariable("id") Long id) {
-        return userService.getFriends(id);
+    public ResponseEntity<List<UserDto>> getFriends(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(userService.getFriends(id));
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
-    @ResponseStatus(HttpStatus.OK)
-    public List<UserDto> getCommonFriends(@PathVariable("id") Long id, @PathVariable("otherId") Long otherId) {
-        return userService.getCommonFriends(id, otherId);
+    public ResponseEntity<List<UserDto>> getCommonFriends(@PathVariable("id") Long id, @PathVariable("otherId") Long otherId) {
+        return ResponseEntity.ok(userService.getCommonFriends(id, otherId));
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUser(@PathVariable("id") Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable("id") Long id) {
         userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}/feed")
-    @ResponseStatus(HttpStatus.OK)
-    public List<EventDto> getFeed(@PathVariable("id") Long id) {
-        return eventService.getFeed(id);
+    public ResponseEntity<List<EventDto>> getFeed(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(eventService.getFeed(id));
     }
 
 
     @GetMapping("/{id}/recommendations")
-    @ResponseStatus(HttpStatus.OK)
-    public List<Film> getRecommendations(@PathVariable("id") Long id) {
-        return userService.getRecommendations(id);
+    public ResponseEntity<List<Film>> getRecommendations(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(userService.getRecommendations(id));
     }
 }

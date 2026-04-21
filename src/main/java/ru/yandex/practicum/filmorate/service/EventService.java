@@ -18,7 +18,6 @@ public class EventService {
     private final EventRepository eventRepository;
     private final EventMapper eventMapper;
 
-    // Публичный метод для добавления события (вызывается из других сервисов)
     public void addEvent(Long userId, EventType eventType, Operation operation, Long entityId) {
         eventRepository.addEvent(userId, eventType, operation, entityId);
     }

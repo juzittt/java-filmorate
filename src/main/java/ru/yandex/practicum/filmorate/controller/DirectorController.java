@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.DirectorDto;
 import ru.yandex.practicum.filmorate.service.DirectorService;
@@ -17,32 +18,29 @@ public class DirectorController {
     private final DirectorService directorService;
 
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
-    public List<DirectorDto> getDirectors() {
-        return directorService.getDirectors();
+    public ResponseEntity<List<DirectorDto>> getDirectors() {
+        return ResponseEntity.ok(directorService.getDirectors());
     }
 
     @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public DirectorDto getDirector(@PathVariable("id") Long id) {
-        return directorService.getDirectorById(id);
+    public ResponseEntity<DirectorDto> getDirector(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(directorService.getDirectorById(id));
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public DirectorDto createDirector(@Valid @RequestBody DirectorDto request) {
-        return directorService.createDirector(request);
+    public ResponseEntity<DirectorDto> createDirector(@Valid @RequestBody DirectorDto request) {
+        DirectorDto createdDirector = directorService.createDirector(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdDirector);
     }
 
     @PutMapping
-    @ResponseStatus(HttpStatus.OK)
-    public DirectorDto updateDirector(@Valid @RequestBody DirectorDto request) {
-        return directorService.updateDirector(request);
+    public ResponseEntity<DirectorDto> updateDirector(@Valid @RequestBody DirectorDto request) {
+        return ResponseEntity.ok(directorService.updateDirector(request));
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteDirector(@PathVariable("id") Long id) {
+    public ResponseEntity<Void> deleteDirector(@PathVariable("id") Long id) {
         directorService.deleteDirector(id);
+        return ResponseEntity.noContent().build();
     }
 }
