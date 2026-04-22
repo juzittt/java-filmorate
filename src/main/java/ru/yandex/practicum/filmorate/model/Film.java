@@ -9,7 +9,9 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Builder(toBuilder = true)
@@ -39,4 +41,8 @@ public class Film {
     @Builder.Default
     @JsonProperty("genres")
     private List<Genre> genres = new ArrayList<>();
+
+    @JsonProperty("directors")
+    @NotNull(message = "Режиссёр у фильма обязан быть")
+    private Set<Director> directors = new LinkedHashSet<>();
 }

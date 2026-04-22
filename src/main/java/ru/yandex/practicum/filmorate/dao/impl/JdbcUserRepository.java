@@ -37,7 +37,7 @@ public class JdbcUserRepository implements UserRepository {
         SELECT u.* FROM users u
         INNER JOIN friendship f1 ON u.user_id = f1.friend_id
         INNER JOIN friendship f2 ON u.user_id = f2.friend_id
-        WHERE f1.user_id = ? AND f2.user_id = ? AND f1.status_id = 1 AND f2.status_id = 1
+        WHERE f1.user_id = ? AND f2.user_id = ?
         """;
     private static final String ADD_FRIEND = "INSERT INTO friendship (user_id, friend_id, status_id) VALUES (?, ?, 1)";
     private static final String REMOVE_FRIEND = "DELETE FROM friendship WHERE user_id = ? AND friend_id = ?";
@@ -77,6 +77,10 @@ public class JdbcUserRepository implements UserRepository {
 
     @Override
     public User save(User user) {
+        if (user.getName() == null || user.getName().trim().isEmpty()) {
+            user.setName(user.getLogin());
+        }
+
         if (user.getUserId() == null) {
             long id = insert(INSERT,
                     user.getEmail(),
