@@ -5,8 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dto.GenreDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.dao.GenreRepository;
+import ru.yandex.practicum.filmorate.mapper.mapstruct.GenreMapper;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,12 +17,12 @@ import java.util.stream.Collectors;
 public class GenreService {
 
     private final GenreRepository genreRepository;
-    private final FilmMapper filmMapper;
+    private final GenreMapper genreMapper;
 
     public List<GenreDto> getAllGenres() {
         log.info("Fetching all genres");
         List<GenreDto> genres = genreRepository.findAll().stream()
-                .map(filmMapper::toDto)
+                .map(genreMapper::toDto)
                 .collect(Collectors.toList());
         log.info("Found {} genres", genres.size());
         return genres;
@@ -34,7 +34,7 @@ public class GenreService {
         return genreRepository.findById(id)
                 .map(genre -> {
                     log.debug("Genre found: id={}, name='{}'", genre.getGenreId(), genre.getName());
-                    return filmMapper.toDto(genre);
+                    return genreMapper.toDto(genre);
                 })
                 .orElseThrow(() -> {
                     log.warn("Genre with id={} not found", id);

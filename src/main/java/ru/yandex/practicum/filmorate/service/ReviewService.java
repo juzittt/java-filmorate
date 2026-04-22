@@ -11,7 +11,7 @@ import ru.yandex.practicum.filmorate.dto.ReviewDto;
 import ru.yandex.practicum.filmorate.dto.UpdateReviewRequest;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.mapper.ReviewMapper;
+import ru.yandex.practicum.filmorate.mapper.mapstruct.ReviewMapper;
 import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.Review;
@@ -57,7 +57,7 @@ public class ReviewService {
                 });
 
         existing.setContent(request.getContent());
-        existing.setPositive(request.getIsPositive());
+        existing.setIsPositive(request.getIsPositive());
 
         reviewRepository.update(existing);
         eventService.addEvent(existing.getUserId(), EventType.REVIEW, Operation.UPDATE, existing.getReviewId());

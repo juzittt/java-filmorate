@@ -96,7 +96,7 @@ public class JdbcReviewRepository implements ReviewRepository {
     public Review save(Review review) {
         Long id = insertWithGeneratedKey(INSERT_REVIEW,
                 review.getContent(),
-                review.isPositive(),
+                review.getIsPositive(),
                 review.getUserId(),
                 review.getFilmId());
 
@@ -127,7 +127,7 @@ public class JdbcReviewRepository implements ReviewRepository {
     public void update(Review review) {
         int rows = jdbc.update(UPDATE_REVIEW,
                 review.getContent(),
-                review.isPositive(),
+                review.getIsPositive(),
                 review.getReviewId());
         if (rows == 0) {
             throw new NotFoundException("Отзыв с id = " + review.getReviewId() + " не найден");

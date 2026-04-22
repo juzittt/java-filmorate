@@ -8,7 +8,8 @@ import ru.yandex.practicum.filmorate.dao.impl.JdbcUserRepository;
 import ru.yandex.practicum.filmorate.dto.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.mapper.FilmMapper;
+import ru.yandex.practicum.filmorate.mapper.mapstruct.FilmMapper;
+import ru.yandex.practicum.filmorate.mapper.mapstruct.GenreMapper;
 import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.dao.FilmRepository;
@@ -35,6 +36,8 @@ public class FilmService {
     private final EventService eventService;
     private final JdbcUserRepository userRepository;
 
+    private final GenreMapper genreMapper;
+
     public FilmDto createFilm(NewFilmRequest request) {
         log.info("Creating new film: title='{}', releaseDate={}", request.getName(), request.getReleaseDate());
         validateNewFilmRequest(request);
@@ -49,7 +52,7 @@ public class FilmService {
         log.info("Updating film with id={}", request.getId());
         validateUpdateFilmRequest(request);
         Film film = getFilmEntity(request.getId());
-        filmMapper.updateFilmFromRequest(film, request);
+        filmMapper.updateFilmFromRequest(request, film);
         filmRepository.update(film);
         linkGenres(film.getFilmId(), request.getGenres());
         log.info("Film updated successfully: id={}, title='{}'", film.getFilmId(), film.getName());
@@ -198,7 +201,7 @@ public class FilmService {
         }
 
         List<Genre> genreEntities = genres.stream()
-                .map(filmMapper::toEntity)
+                .map(genreMapper::toEntity)
                 .collect(Collectors.toList());
 
         genreRepository.replaceGenres(filmId, genreEntities);
