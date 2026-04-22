@@ -42,6 +42,7 @@ public class Film {
     @JsonProperty("genres")
     private List<Genre> genres = new ArrayList<>();
 
+    @Builder.Default
     @JsonProperty("directors")
     @NotNull(message = "Режиссёр у фильма обязан быть")
     private Set<Director> directors = new LinkedHashSet<>();
