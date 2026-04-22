@@ -1,5 +1,5 @@
 # java-filmorate
-<img width="1063" height="747" alt="db-sheme_dev" src="https://github.com/user-attachments/assets/3753e954-299f-4838-b87e-aba1bc55f8b5" />
+<img width="1085" height="732" alt="db-sheme_dev" src="https://github.com/user-attachments/assets/faf7172d-18ed-44b8-a2ac-b1cdd3c3168a" />
 
 Список пользователей
 ```sql
