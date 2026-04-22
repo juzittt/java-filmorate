@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.EventRepository;
 import ru.yandex.practicum.filmorate.dto.EventDto;
-import ru.yandex.practicum.filmorate.mapper.EventMapper;
+import ru.yandex.practicum.filmorate.mapper.mapstruct.EventMapper;
 import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Operation;
 

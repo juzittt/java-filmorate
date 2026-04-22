@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 public class Review {
     private Long reviewId;
     private String content;
-    private boolean isPositive;
+    private Boolean isPositive;
     private Long userId;
     private Long filmId;
     private Integer useful;
