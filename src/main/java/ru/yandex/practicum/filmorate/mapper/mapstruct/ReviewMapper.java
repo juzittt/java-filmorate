@@ -5,14 +5,13 @@ import ru.yandex.practicum.filmorate.dto.NewReviewRequest;
 import ru.yandex.practicum.filmorate.dto.ReviewDto;
 import ru.yandex.practicum.filmorate.model.Review;
 
-@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+@Mapper(componentModel = "spring")
 public interface ReviewMapper {
 
     @Mapping(target = "reviewId", source = "reviewId")
     ReviewDto toDto(Review review);
 
     @Mapping(target = "reviewId", ignore = true)
-    @Mapping(target = "isPositive", source = "isPositive")
     Review toEntity(NewReviewRequest request);
 
     @Mapping(target = "reviewId", ignore = true)
